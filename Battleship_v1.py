@@ -50,6 +50,47 @@ def place_boats () :
         
 # print(placer_bateau_aleatoire(grid_act))
 #{'P': [(9, 1), (9, 2), (9, 3), (9, 4), (9, 5)], 'C': [(1, 8), (2, 8), (3, 8), (4, 8)], 'S': [(6, 7), (7, 7), (8, 7)], 'T': [(8, 3), (8, 4)], 'B': [(5, 0)]}
+def placer_bateaux():
+    dict_bateau = {}
+    case_occupe = []
+    for symbole,taille in bateaux.items():
+        invalid = False
+        while invalid==False:    
+            ligne = random.randint(0,9)
+            colonne = random.randint(0,9)
+            orientation = random.choice(["H","V"])
+            pos = []
+            if orientation=="H":
+                if colonne+taille<=10:
+                    for i in range(taille):
+                        p = (ligne,colonne+i)
+                        pos.append(p)
+                else:
+                    pos = []
+            else:
+                if ligne+taille<=10:
+                    for i in range(taille):
+                        p = (ligne+i,colonne)
+                        pos.append(p)
+                else:
+                    pos = []
+            if pos!=[]:
+                chevauchement = False
+                for k in pos:
+                    if k in case_occupe:
+                        chevauchement=True
+                if chevauchement==False:
+                    dict_bateau[symbole] = pos 
+                    for x in pos:
+                        case_occupe.append(x)
+                    invalid=True
+    return dict_bateau
+
+
+print(placer_bateaux())
+
+
+
 
 if  __name__ == "__main__" :
     grid_act = np.full(shape= [10,10], fill_value= " ")
@@ -58,4 +99,5 @@ if  __name__ == "__main__" :
     x = input("Enter the row to attack : ")
     y = input("Enter the column to attack : ")
     attack(x,y)
+
 
