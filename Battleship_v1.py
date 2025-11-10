@@ -23,7 +23,33 @@ def attack (x, y, boat_grid, attack_grid) :
 def place_boats () :
     # Cindy
     return 
-
+#def placer_bateau_aleatoire(grille):
+#     dict_bateau = {}
+#     for symbole in bateaux.keys():
+#         placer=False
+#         taille = bateaux[symbole]
+#         liste = []
+#         while placer==False:    
+#             ligne = random.randint(0,9)
+#             colonne = random.randint(0,9)
+#             orientation = random.choice(["H","V"])
+#             if orientation=="H":
+#                 if(colonne+taille)<=10 and all(grille[ligne][colonne+i]==" " for i in range(taille)):
+#                     for i in range(taille):
+#                         grid_act[ligne][colonne+i] = symbole
+#                         liste.append((ligne,colonne+i))
+#                     placer=True
+#             if orientation=="V":
+#                 if(ligne+taille)<=10 and all(grille[ligne+i][colonne]==" " for i in range(taille)):
+#                     for i in range(taille):
+#                         grid_act[ligne+i][colonne] = symbole
+#                         liste.append((ligne+i,colonne))
+#                     placer=True
+#         dict_bateau[symbole] = liste
+#     return dict_bateau
+        
+# print(placer_bateau_aleatoire(grid_act))
+#{'P': [(9, 1), (9, 2), (9, 3), (9, 4), (9, 5)], 'C': [(1, 8), (2, 8), (3, 8), (4, 8)], 'S': [(6, 7), (7, 7), (8, 7)], 'T': [(8, 3), (8, 4)], 'B': [(5, 0)]}
 
 if  __name__ == "__main__" :
     grid_act = np.full(shape= [10,10], fill_value= " ")
@@ -32,3 +58,4 @@ if  __name__ == "__main__" :
     x = input("Enter the row to attack : ")
     y = input("Enter the column to attack : ")
     attack(x,y)
+
