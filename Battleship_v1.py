@@ -1,56 +1,111 @@
 import numpy as np
+import random
 
-def Affichage (grid,coords):
-    print("Bataille Navale :\n\n\n")
-    print("    1   2   3   4   5   6   7   8   9   10")
-    for i in range (21) :
-        if i%2 == 0 :
-            print ("   ---------------------------------------  ")
-        if i%2 == 1 :
-            print(f"{coords[i//2]} | {grid[i//2][0]} | {grid[i//2][1]} | {grid[i//2][2]} | {grid[i//2][3]} | {grid[i//2][4]} | {grid[i//2][5]} | {grid[i//2][6]} | {grid[i//2][7]} | {grid[i//2][8]} | {grid[i//2][9]} |")
+def show_grid(grid, coords,score, message):
+    """
+    Displays current grid and score
 
+    Parameters:
+        grid (array): The grid with values to display
+        coords (list): List of column indexes de display
+        score (int): Current player score (number of tries)
+        message (str): Message to display
+    """
 
-def attack (x, y, boat_grid, attack_grid) :
+    print("Bataille Navale :\n\n")
+    print("    " + "   ".join(str(i) for i in range(1, 11)))
+    
+    sep = "   " + "-" * 39
+    
+    for i, row in enumerate(grid):
+        print(sep)
+        if i == 5 :
+            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"            Nombre de tirs : {score}")
+        elif i == 7 :
+            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"            {message}")
+        else :
+            print(f"{coords[i]} | " + " | ".join(row) + " |")
+    
+    print(sep)
 
-    x = coord_list.index(x)
+def attack (x : str, y : int, boat_coord : dict[str, list[tuple[int, int]]], attack_grid : np.ndarray, score : int, coord_list : list[str]) :
+    """
+    Process an attack on the battleship grid
+
+    Parameters:
+        x (str): Row coordinate of player attack
+        y (int): Column coordinate of player attack
+        boat_coord (dict): Dictionnary with boat coordinates
+        attack_grid (array): Current grid with player hits and misses
+        coord_list (list): Names of rows (x)
+    
+    Returns:
+        tuple: A tuple containing:
+            - str: "Fail" if coordinates already attacked, "Miss" if missed, or boat name if hit
+            - bool: True if a boat was sunk, False otherwise
+            - int: Updated player score
+    """
+    x = coord_list.index(x.upper())
     y -= 1
 
-    if boat_grid[x][y] == " " :
-        attack_grid[x][y] = "*"
+    hit = None
 
-    return 
+    if attack_grid[x][y] in ["*","+","X"] :
+        hit = "Fail"
+        sunk = False
+    else :
+        for boat, all_coords in boat_coord.items() :
+            if (x,y) in all_coords :
+                attack_grid[x][y] = "+"
+                score += 1
+                sunk = check_sink(boat_hit= boat,boat_coord= boat_coord, attack_grid= attack_grid)
+                hit = boat
+        if hit == None :
+            attack_grid[x][y] = "*"
+            score += 1
+            sunk = False
+            hit = "Miss"
+    return hit, sunk, score
 
-def place_boats () :
-    # Cindy
-    return 
-#def placer_bateau_aleatoire(grille):
-#     dict_bateau = {}
-#     for symbole in bateaux.keys():
-#         placer=False
-#         taille = bateaux[symbole]
-#         liste = []
-#         while placer==False:    
-#             ligne = random.randint(0,9)
-#             colonne = random.randint(0,9)
-#             orientation = random.choice(["H","V"])
-#             if orientation=="H":
-#                 if(colonne+taille)<=10 and all(grille[ligne][colonne+i]==" " for i in range(taille)):
-#                     for i in range(taille):
-#                         grid_act[ligne][colonne+i] = symbole
-#                         liste.append((ligne,colonne+i))
-#                     placer=True
-#             if orientation=="V":
-#                 if(ligne+taille)<=10 and all(grille[ligne+i][colonne]==" " for i in range(taille)):
-#                     for i in range(taille):
-#                         grid_act[ligne+i][colonne] = symbole
-#                         liste.append((ligne+i,colonne))
-#                     placer=True
-#         dict_bateau[symbole] = liste
-#     return dict_bateau
-        
-# print(placer_bateau_aleatoire(grid_act))
-#{'P': [(9, 1), (9, 2), (9, 3), (9, 4), (9, 5)], 'C': [(1, 8), (2, 8), (3, 8), (4, 8)], 'S': [(6, 7), (7, 7), (8, 7)], 'T': [(8, 3), (8, 4)], 'B': [(5, 0)]}
-def placer_bateaux():
+
+def check_sink (boat_hit, boat_coord, attack_grid):
+    """
+    Check if player attack sinks a boat
+
+    Parameters:
+        boat_hit (str): Name of the boat hit by the attack
+        boat_coord (dict): Dictionnary with boat coordinates
+        attack_grid (array): Current grid with player hits and misses
+    
+    Returns:
+        bool: 
+            True if boat is sunk, False otherwise
+    """
+
+    hits = 0
+
+    for coords in boat_coord[boat_hit] :
+        if attack_grid[coords[0]][coords[1]] == "+" :
+            hits += 1
+        elif attack_grid[coords[0]][coords[1]] == " " :
+            return False
+    if hits == len(boat_coord[boat_hit]) :
+        for coords in boat_coord[boat_hit] :
+            attack_grid[coords[0]][coords[1]] = "X"
+        return True
+    else :
+        return False
+
+
+def place_boats():
+    """
+    Generates random boat coordinates
+    
+    Returns:
+        dict:
+            A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
+    """
+    bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}
     dict_bateau = {}
     case_occupe = []
     for symbole,taille in bateaux.items():
@@ -87,17 +142,47 @@ def placer_bateaux():
     return dict_bateau
 
 
-print(placer_bateaux())
 
-
-
-
-if  __name__ == "__main__" :
-    grid_act = np.full(shape= [10,10], fill_value= " ")
+if  __name__ == "__main__" :   
     coord_list = ["A","B","C","D","E","F","G","H","I","J"]
-    Affichage(gird= grid_act, coords= coord_list)
-    x = input("Enter the row to attack : ")
-    y = input("Enter the column to attack : ")
-    attack(x,y)
-
-
+    boat_names = {"P":"le Porte-Avion", "C": "le Croiseur", "S" : "le Sous-marin", "T" : " le Torpilleur", "B" : "la Barque"}
+    play = True 
+    while play :
+        message = ""
+        boats_left = 5
+        won = False
+        score = 0
+        attack_grid = np.full(shape= [10,10], fill_value= " ")
+        boat_coords = place_boats()
+        while won == False :
+            show_grid (grid= attack_grid, coords= coord_list, score= score, message= message)
+            x = input("Enter the row to attack (A-J) : ")
+            y = input("Enter the column to attack (1-10) : ")
+            if (x.upper() in coord_list) & (y.isnumeric()) :
+                if 1<=int(y)<=10 :
+                    boat_hit, sunk, score = attack(x,int(y),boat_coords,attack_grid,score,coord_list)
+                    if sunk :
+                        message = f'Vous avez coulé {boat_names[boat_hit]} !'
+                        boats_left -= 1
+                        if boats_left == 0 :
+                            won = True
+                    elif (boat_hit != "Miss") & (boat_hit != "Fail") :
+                        print(boat_hit)
+                        message = "Touché !"
+                    elif boat_hit == "Miss" :
+                        message = 'Raté !'
+                    elif (boat_hit == "Fail") :
+                        message = "Vous avez déjà essayer à cet endroit... Réessayez !"
+                else : 
+                    message = "Coordonnées invalides... Réessayez !"
+            else : 
+                message = "Coordonnées invalides... Réessayez !"
+            
+        show_grid (grid= attack_grid, coords= coord_list, score= score, message= message)
+        print ("Vous avez gagné !!")
+        print (f'Il vous aura fallu {score} tirs !')
+        play_again = ""
+        while play_again.upper() not in ["O","N"] :
+            play_again = input("Voulez vous rejouer ? (O/N)\n")
+        if play_again == "N" :
+            play = False
