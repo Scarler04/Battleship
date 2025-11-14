@@ -97,7 +97,7 @@ def check_sink (boat_hit, boat_coord, attack_grid):
         return False
 
 
-def place_boats():
+def place_boats():  
     """
     Generates random boat coordinates
     
@@ -105,24 +105,24 @@ def place_boats():
         dict:
             A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
     """
-    bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}
-    dict_bateau = {}
+    bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}       # Dictionary of boat lengths
+    dict_bateau = {}                                
     case_occupe = []
-    for symbole,taille in bateaux.items():
-        invalid = False
+    for symbole,taille in bateaux.items():          # Browse the dictionary that we introduce at the begining
+        invalid = False                             # Booleen to see if we can put the boat or no (if the boat exceeds the grid or if the boat overlap another boat )
         while invalid==False:    
-            ligne = random.randint(0,9)
+            ligne = random.randint(0,9)             # Stock the random coordonate in the variable "ligne" and the variable "colonne"
             colonne = random.randint(0,9)
-            orientation = random.choice(["H","V"])
+            orientation = random.choice(["H","V"])  # Choose boat direction (H : horizontal, V : vertical)
             pos = []
             if orientation=="H":
-                if colonne+taille<=10:
+                if colonne+taille<=10:              # Check if the boat fits on the grid using generated coordinates and direction
                     for i in range(taille):
-                        p = (ligne,colonne+i)
-                        pos.append(p)
+                        p = (ligne,colonne+i)        
+                        pos.append(p)               # List of boat's coordinates
                 else:
-                    pos = []
-            else:
+                    pos = []                        
+            else:                                    # Same for vertical
                 if ligne+taille<=10:
                     for i in range(taille):
                         p = (ligne+i,colonne)
@@ -137,9 +137,10 @@ def place_boats():
                 if chevauchement==False:
                     dict_bateau[symbole] = pos 
                     for x in pos:
-                        case_occupe.append(x)
+                        case_occupe.append(x)       # We add the coordinates in the list to make sure that we have no duplicates
                     invalid=True
     return dict_bateau
+
 
 
 
@@ -186,3 +187,4 @@ if  __name__ == "__main__" :
             play_again = input("Voulez vous rejouer ? (O/N)\n")
         if play_again == "N" :
             play = False
+
