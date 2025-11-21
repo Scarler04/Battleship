@@ -166,7 +166,7 @@ if  __name__ == "__main__" :
             x = input("Enter the row to attack (A-J) : ")
             y = input("Enter the column to attack (1-10) : ")
             # Check if input is valid
-            if (x.upper().strip() in coord_list) & (y.isnumeric()) :
+            if (x.upper().strip() in coord_list) & (y.strip().isnumeric()) :
                 if 1<=int(y)<=10 :
                     boat_hit, sunk, score = attack(x,int(y),boat_coords,attack_grid,score,coord_list)
                     if sunk :
@@ -194,3 +194,4 @@ if  __name__ == "__main__" :
             play_again = input("Voulez vous rejouer ? (O/N)\n")
         if play_again.upper().strip() == "N" :
             play = False
+
