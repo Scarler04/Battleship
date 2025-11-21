@@ -13,16 +13,17 @@ def show_grid(grid, coords,score, message):
     """
 
     print("Bataille Navale :\n\n")
-    print("    " + "   ".join(str(i) for i in range(1, 11)))
+    print("    " + "   ".join(str(i) for i in range(1, 11))) # Print column index
     
-    sep = "   " + "-" * 39
+    sep = "   " + "-" * 39 
     
+    # Display grid
     for i, row in enumerate(grid):
         print(sep)
         if i == 5 :
-            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"            Nombre de tirs : {score}")
-        elif i == 7 :
-            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"            {message}")
+            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"            Nombre de tirs : {score}") # Display grid and current player score on row 5
+        elif i == 7 : 
+            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"            {message}") # Display grid and message on row 7
         else :
             print(f"{coords[i]} | " + " | ".join(row) + " |")
     
@@ -45,23 +46,25 @@ def attack (x : str, y : int, boat_coord : dict[str, list[tuple[int, int]]], att
             - bool: True if a boat was sunk, False otherwise
             - int: Updated player score
     """
-    x = coord_list.index(x.upper())
-    y -= 1
+    x = coord_list.index(x.upper().strip()) # Get row index from letter input (A-J => 0-9)
+    y -= 1 # Get column index : array index is 0-9, player index/input is 1-10
 
-    hit = None
+    hit = None # No boats hit by default
 
+    # Check if player already attacked these coordinates
     if attack_grid[x][y] in ["*","+","X"] :
         hit = "Fail"
         sunk = False
     else :
+        # Check each boat to see if attack hit it
         for boat, all_coords in boat_coord.items() :
             if (x,y) in all_coords :
-                attack_grid[x][y] = "+"
+                attack_grid[x][y] = "+" # "+" = Boat hit
                 score += 1
                 sunk = check_sink(boat_hit= boat,boat_coord= boat_coord, attack_grid= attack_grid)
-                hit = boat
+                hit = boat # Store boat key
         if hit == None :
-            attack_grid[x][y] = "*"
+            attack_grid[x][y] = "*" # "*" = Attack missed
             score += 1
             sunk = False
             hit = "Miss"
@@ -84,18 +87,20 @@ def check_sink (boat_hit, boat_coord, attack_grid):
 
     hits = 0
 
+    # Go through coordinates of designated boat
     for coords in boat_coord[boat_hit] :
+        # Check how many of the boat's coordinates were hit
         if attack_grid[coords[0]][coords[1]] == "+" :
             hits += 1
         elif attack_grid[coords[0]][coords[1]] == " " :
-            return False
+            return False # Boat is not sunk as soon as we find a coordinate not attacked
+    # Check if boat was hit on all coordinates
     if hits == len(boat_coord[boat_hit]) :
         for coords in boat_coord[boat_hit] :
-            attack_grid[coords[0]][coords[1]] = "X"
-        return True
+            attack_grid[coords[0]][coords[1]] = "X" # "X" = Boat sunk
+        return True 
     else :
         return False
-
 
 def place_boats():  
     """
@@ -143,11 +148,11 @@ def place_boats():
 
 
 
-
 if  __name__ == "__main__" :   
-    coord_list = ["A","B","C","D","E","F","G","H","I","J"]
-    boat_names = {"P":"le Porte-Avion", "C": "le Croiseur", "S" : "le Sous-marin", "T" : " le Torpilleur", "B" : "la Barque"}
+    coord_list = ["A","B","C","D","E","F","G","H","I","J"] # List of row indexes
+    boat_names = {"P":"le Porte-Avion", "C": "le Croiseur", "S" : "le Sous-marin", "T" : " le Torpilleur", "B" : "la Barque"} # Boat names (for boat sunk message)
     play = True 
+    # Loop while player wants to play
     while play :
         message = ""
         boats_left = 5
@@ -155,11 +160,13 @@ if  __name__ == "__main__" :
         score = 0
         attack_grid = np.full(shape= [10,10], fill_value= " ")
         boat_coords = place_boats()
+        # Start new game
         while won == False :
             show_grid (grid= attack_grid, coords= coord_list, score= score, message= message)
             x = input("Enter the row to attack (A-J) : ")
             y = input("Enter the column to attack (1-10) : ")
-            if (x.upper() in coord_list) & (y.isnumeric()) :
+            # Check if input is valid
+            if (x.upper().strip() in coord_list) & (y.isnumeric()) :
                 if 1<=int(y)<=10 :
                     boat_hit, sunk, score = attack(x,int(y),boat_coords,attack_grid,score,coord_list)
                     if sunk :
@@ -178,13 +185,12 @@ if  __name__ == "__main__" :
                     message = "Coordonnées invalides... Réessayez !"
             else : 
                 message = "Coordonnées invalides... Réessayez !"
-            
+        
         show_grid (grid= attack_grid, coords= coord_list, score= score, message= message)
         print ("Vous avez gagné !!")
         print (f'Il vous aura fallu {score} tirs !')
         play_again = ""
-        while play_again.upper() not in ["O","N"] :
+        while play_again.upper().strip() not in ["O","N"] :
             play_again = input("Voulez vous rejouer ? (O/N)\n")
-        if play_again == "N" :
+        if play_again.upper().strip() == "N" :
             play = False
-
