@@ -24,101 +24,154 @@ class Joueur :
 
 
 def show_boat(grid, coords, message):
-    """
-    Displays current grid and score
-
-    Parameters:
-        grid (array): The grid with values to display
-        coords (list): List of column indexes de display
-        score (int): Current player score (number of tries)
-        message (str): Message to display
-    """
-
-    print("Bataille Navale :\n\n")
+    print("\nBataille Navale :\n")
     print("    " + "   ".join(str(i) for i in range(1, 11)))
-    
     sep = "   " + "-" * 39
-    
+
     for i, row in enumerate(grid):
         print(sep)
-        if i == 7 :
-            print(f"{coords[i]} | " + " | ".join(row) + " |" + f"     {message}")
-        else :
+        if i == 7:
+            print(f"{coords[i]} | " + " | ".join(row) + f" |   {message}")
+        else:
             print(f"{coords[i]} | " + " | ".join(row) + " |")
-    
     print(sep)
 
 
+def positions(x, y, orientation, taille):
+    pos = []
+    if orientation == "H":
+        if y + taille > 10:
+            return False
+        for i in range(taille):
+            pos.append((x, y + i))
+    else:
+        if x + taille > 10:
+            return False
+        for i in range(taille):
+            pos.append((x + i, y))
+    return pos
 
-def placer_bateau_joueur():
-    boat_names = {"P":("Porte-Avion",5), "C": ("Croiseur",4), "S" : ("Sous-marin",3), "T" : ("Torpilleur",2), "B" : ("Barque",1)}
-    coord_list = ["A","B","C","D","E","F","G","H","I","J"]
-    cases_occup = [] 
+
+def chevauchement(pos, cases_occup):
+    return any(p in cases_occup for p in pos)
+
+
+def placer_bateau(symbole, pos, attack_grid, cases_occup):
+    for (l, c) in pos:
+        attack_grid[l][c] = symbole
+        cases_occup.append((l, c))
+
+
+def placement(symbole, nom, taille, x, y, orientation, attack_grid, cases_occup, coord_list):
+
+    if x.upper() not in coord_list or not y.isdigit():
+        return None, "Coordonnées invalides."
+
+    ligne = coord_list.index(x.upper())
+    col = int(y) - 1
+
+    if col < 0 or col >= 10:
+        return None, "Colonne invalide."
+
+    pos = positions(ligne, col, orientation, taille)
+    if pos is False:
+        return None, "Le bateau dépasse de la grille."
+
+    if chevauchement(pos, cases_occup):
+        return None, "Le bateau chevauche un autre."
+
+    placer_bateau(symbole, pos, attack_grid, cases_occup)
+    return pos, f"{nom} placé !"
+
+
+def placer_un_bateau(symbole, nom, taille, attack_grid, cases_occup, coord_list):
+    valide = False
+    while not valide:
+        print(f"Nouvelles coordonnées pour {nom} ({taille} cases)")
+        x = input("Ligne (A-J) : ")
+        y = input("Colonne (1-10) : ")
+
+        orientation = "H"
+        if taille > 1:
+            orientation = input("Orientation H/V : ").upper()
+
+        pos, message = placement(symbole, nom, taille, x, y, orientation,attack_grid, cases_occup, coord_list)
+
+        show_boat(attack_grid, coord_list, message)
+
+        if pos is not None:
+            return pos
+
+
+def grille_joueur():
+    attack_grid = np.full((10, 10), " ")
+    cases_occup = []
     dict_bateaux = {}
+    return attack_grid, cases_occup, dict_bateaux
+
+
+if __name__ == "__main__":
+
+    coord_list = ["A","B","C","D","E","F","G","H","I","J"]
+    boat_names = {
+        "P": ("Porte-Avion", 5),
+        "C": ("Croiseur", 4),
+        "S": ("Sous-marin", 3),
+        "T": ("Torpilleur", 2),
+        "B": ("Barque", 1)
+    }
+
+    attack_grid, cases_occup, dict_bateaux = grille_joueur()
+
     message = "Placement des bateaux"
-    attack_grid = np.full(shape= [10,10], fill_value= " ")
-    show_boat(grid=attack_grid, coords=coord_list, message=message)
-    for symbole,(nom,nombre) in boat_names.items():
-        placement_valide = False
-        while not placement_valide:
-            print(f'Où voulez-vous placer votre {nom} ({nombre} cases)?')
-            x = input("Ligne : ")
-            y = input("Colonne : ")
-            if nombre > 1:
-                orientation = input("Horizontale(H) / Verticale(V) : ").upper()
+    show_boat(attack_grid, coord_list, message)
+
+    for symbole, (nom, taille) in boat_names.items():
+        valide = False
+        while not valide:
+            print(f"Où placer {nom} ({taille} cases) ?")
+            x = input("Ligne (A-J) : ")
+            y = input("Colonne (1-10) : ")
+
+            orientation = "H"
+            if taille > 1:
+                orientation = input("Orientation H/V : ").upper()
+
+            pos, message = placement(symbole, nom, taille, x, y, orientation,attack_grid, cases_occup, coord_list)
+
+            show_boat(attack_grid, coord_list, message)
+
+            if pos is not None:
+                dict_bateaux[symbole] = pos
+                valide = True
+    OK = True
+    while OK:
+        o = input("Voulez-vous changer la place d'un bateau ? (O/N) : ").upper().strip()
+        if o == "N":
+            OK = False
+        elif o == "O":
+            s = input("Quel bateau ? (P/C/S/T/B) : ").upper().strip()
+            if s in boat_names:
+                nom, taille = boat_names[s]
+                anciennes = dict_bateaux[s]
+                for (l, c) in anciennes:
+                    attack_grid[l][c] = " "
+                    cases_occup.remove((l, c))
+
+                show_boat(attack_grid, coord_list, "Bateau retiré")
+                nouvelles = placer_un_bateau(s, nom, taille, attack_grid, cases_occup, coord_list)
+                dict_bateaux[s] = nouvelles
             else:
-                orientation = "H"  
-            if (x.upper() in coord_list) & (y.isnumeric()) & (orientation in ["H","V"]):
-                if 1<=int(y)<=10 :
-                    pos = []
-                    ligne = coord_list.index(x.upper())
-                    col = int(y) - 1
-                    if orientation=="H":
-                        if col+nombre<=10:              
-                            for i in range(nombre):
-                                p = (ligne,col+i)        
-                                pos.append(p)               
-                        else:
-                            pos = []                        
-                    else:                                   
-                        if ligne+nombre<=10:
-                            for i in range(nombre):
-                                p = (ligne+i,col)
-                                pos.append(p)
-                        else:
-                            pos = []
-                    if pos!=[]:
-                        chevauchement = False
-                        for k in pos:
-                            if k in cases_occup:
-                                chevauchement=True
-                        if chevauchement==False:
-                            dict_bateaux[symbole] = pos 
-                            for x in pos:
-                                cases_occup.append(x)       
-                            for (l,c) in pos:
-                                attack_grid[l][c] = symbole
-                            placement_valide = True
-                            message = f"{nom} placé !"
-                            show_boat(grid=attack_grid, coords=coord_list, message=message)
+                print("Symbole invalide.")
+        else:
+            print("Choix invalide.")
+    print(dict_bateaux)
 
-                        else:
-                            message= "Impossible de placer le bateau ici, chevauchement!"
-                            show_boat(grid=attack_grid, coords=coord_list, message=message)
-
-                else:
-                    message = "Coordonnées invalides... Réessayez !"
-                    show_boat(grid=attack_grid, coords=coord_list, message=message)
-
-            else:
-                message = "Coordonnées invalides... Réessayez !"
-                show_boat(grid=attack_grid, coords=coord_list, message=message)
-
-placer_bateau_joueur()
 
 if  __name__ == "__main__" :
     grid_act = np.full(shape= [10,10], fill_value= " ")
     coord_list = ["A","B","C","D","E","F","G","H","I","J"]
     Affichage(gird= grid_act, coords= coord_list)
+
 
 
