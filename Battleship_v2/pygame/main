@@ -1,1 +1,131 @@
+import pygame, sys
+from button import Button
+from boutontranspa import TransparentButton
+from PIL import Image  # pour gérer le GIF
+
+pygame.init()
+pygame.mixer.init()
+
+pygame.mixer.music.load("Tobu  Candyland.mp3")
+pygame.mixer.music.play(-1)
+
+SCREEN = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+SCREEN_WIDTH, SCREEN_HEIGHT = SCREEN.get_size()
+clock = pygame.time.Clock()
+
+gif = Image.open("ocean waves GIF by weinventyou.gif")  
+frames = []
+
+try:
+    while True:
+        frame = gif.copy().convert("RGBA")
+        frame = pygame.image.fromstring(frame.tobytes(), frame.size, frame.mode)
+        frame = pygame.transform.scale(frame, (SCREEN_WIDTH, SCREEN_HEIGHT))  # taille de l'écran
+        frames.append(frame)
+        gif.seek(gif.tell() + 1)
+except EOFError:
+    pass 
+
+# Mettre l'image par dessus du GIF
+menu_image = pygame.image.load("Copilot_20251128_101845-removebg-preview.png")
+menu_image = pygame.transform.scale(menu_image, (SCREEN_WIDTH, SCREEN_HEIGHT))
+
+
+def get_font(size):
+    return pygame.font.SysFont("Arial", size)
+
+
+# def play():
+#     while True:
+#         mouse_pos = pygame.mouse.get_pos()
+
+#         # Mettre le GIF en fond
+#         frame_index = 0
+#         for i, frame in enumerate(frames):
+#             SCREEN.blit(frame, (0,0))
+
+#         back_button = Button((640, 600), "BACK", get_font(50), "white", "red")
+#         back_button.change_color(mouse_pos)
+#         back_button.update(SCREEN)
+
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 pygame.quit()
+#                 sys.exit()
+#             if event.type == pygame.MOUSEBUTTONDOWN:
+#                 if back_button.check_for_input(mouse_pos):
+#                     return
+
+#         pygame.display.update()
+#         clock.tick(10)  # vitesse du GIF
+
+# def score():
+#     while True:
+#         mouse_pos = pygame.mouse.get_pos()
+
+#         # AFFICHER LE GIF EN FOND 
+#         for frame in frames:
+#             SCREEN.blit(frame, (0,0))
+
+#         back_button = Button((640, 600), "BACK", get_font(50), "white", "red")
+#         back_button.change_color(mouse_pos)
+#         back_button.update(SCREEN)
+
+#         for event in pygame.event.get():
+#             if event.type == pygame.QUIT:
+#                 pygame.quit()
+#                 sys.exit()
+#             if event.type == pygame.MOUSEBUTTONDOWN:
+#                 if back_button.check_for_input(mouse_pos):
+#                     return
+
+#         pygame.display.update()
+#         clock.tick(10)
+
+def main_menu():
+    frame_index = 0
+
+    while True:
+        mouse_pos = pygame.mouse.get_pos()
+
+        # --- AFFICHER LE GIF EN FOND ---
+        SCREEN.blit(frames[frame_index], (0,0))
+        frame_index = (frame_index + 1) % len(frames)
+
+        # --- AFFICHER L'IMAGE PAR-DESSUS ---
+        SCREEN.blit(menu_image, (0, -100))
+
+        # --- BOUTONS ---
+        image_height = menu_image.get_height()
+        spacing = 30
+        settings_font = get_font(30)
+
+        play_button = Button((SCREEN_WIDTH//2, image_height + spacing - 300),
+                             "PLAY", get_font(75), "white", "red")
+        scoreboard_button = Button((SCREEN_WIDTH//2, image_height + spacing+100 - 300),
+                                "SCOREBOARD", get_font(75), "white", "red")
+        quit_button = Button((SCREEN_WIDTH//2, image_height + spacing + 200 - 300),
+                             "QUIT", get_font(75), "white", "red")
+        setting_button = TransparentButton((SCREEN_WIDTH - 100, 50), "SETTINGS",settings_font,(255, 255, 255),(255, 0, 0)  )
+
+
+        for button in [play_button, scoreboard_button, quit_button,setting_button]:
+            button.update(SCREEN)
+
+        # --- EVENT LOOP ---
+        for event in pygame.event.get():
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                sys.exit()
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if quit_button.check_for_input(mouse_pos):
+                    pygame.quit()
+                    sys.exit()
+
+        pygame.display.update()
+        clock.tick(10)  # vitesse du GIF
+        
+
+main_menu()
+
 
