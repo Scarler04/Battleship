@@ -58,7 +58,7 @@ def placing_boats_grid (grid : np.ndarray, coords : list, message : str):
     print(sep)
 
 
-def show_grids (boat_grid : np.ndarray, attack_grid : np.ndarray, coords : list, score : int, message : str) :
+def show_grids (boat_grid : np.ndarray, attack_grid : np.ndarray, coords : list, score : int, player_message : str, bot_message : str) :
     """
     Displays current grid and score
 
@@ -72,8 +72,10 @@ def show_grids (boat_grid : np.ndarray, attack_grid : np.ndarray, coords : list,
             List of column indexes de display
         score : int
             Current player score (number of tries)
-        message : str
-            Message to display
+        player_message : str
+            Player action message
+        bot_message : str
+            Bot action message
     """
 
     print("Bataille Navale :\n\n")
@@ -84,10 +86,12 @@ def show_grids (boat_grid : np.ndarray, attack_grid : np.ndarray, coords : list,
     # Display grid
     for i, (row1, row2) in enumerate(zip(boat_grid, attack_grid)):
         print(sep)
-        if i == 5 :
-            print(f"{coords[i]} | " + " | ".join(row1) + " |" + " "*16 + f"{coords[i]} | " + " | ".join(row2) + " |" + f"            Nombre de tirs : {score}") # Display grid and current player score on row 5
+        if i == 3 :
+            print(f"{coords[i]} | " + " | ".join(row1) + " |" + " "*16 + f"{coords[i]} | " + " | ".join(row2) + " |" + f"            Nombre de tirs : {score}") # Display grid and current player score on row 3
+        elif i == 5 :
+            print(f"{coords[i]} | " + " | ".join(row1) + " |" + " "*16 + f"{coords[i]} | " + " | ".join(row2) + " |" + f"            {player_message}") # Display grid and player action message on row 5
         elif i == 7 : 
-            print(f"{coords[i]} | " + " | ".join(row1) + " |" + " "*16 + f"{coords[i]} | " + " | ".join(row2) + " |" + f"            {message}") # Display grid and message on row 7
+            print(f"{coords[i]} | " + " | ".join(row1) + " |" + " "*16 + f"{coords[i]} | " + " | ".join(row2) + " |" + f"            {bot_message}") # Display grid and bot action message on row 7
         else :
             print(f"{coords[i]} | " + " | ".join(row1) + " |" + " "*16 + f"{coords[i]} | " + " | ".join(row2) + " |" )
     
@@ -104,6 +108,7 @@ def ascii_art (player_won : bool) :
             True if player won, False otherwise
     """
     if player_won :
+        print("\n\n")
         print(r" /$$     /$$ /$$$$$$  /$$   /$$       /$$      /$$  /$$$$$$  /$$   /$$")
         print(r"|  $$   /$$//$$__  $$| $$  | $$      | $$  /$ | $$ /$$__  $$| $$$ | $$")
         print(r" \  $$ /$$/| $$  \ $$| $$  | $$      | $$ /$$$| $$| $$  \ $$| $$$$| $$")
@@ -113,6 +118,7 @@ def ascii_art (player_won : bool) :
         print(r"    | $$   |  $$$$$$/|  $$$$$$/      | $$/   \  $$|  $$$$$$/| $$ \  $$")
         print(r"    |__/    \______/  \______/       |__/     \__/ \______/ |__/  \__/")
     else :
+        print("\n\n")
         print(r"  /$$$$$$   /$$$$$$  /$$      /$$ /$$$$$$$$        /$$$$$$  /$$    /$$ /$$$$$$$$ /$$$$$$$ ")
         print(r" /$$__  $$ /$$__  $$| $$$    /$$$| $$_____/       /$$__  $$| $$   | $$| $$_____/| $$__  $$")
         print(r"| $$  \__/| $$  \ $$| $$$$  /$$$$| $$            | $$  \ $$| $$   | $$| $$      | $$  \ $$")
