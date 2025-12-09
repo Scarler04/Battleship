@@ -7,10 +7,14 @@ def show_grid(grid, coords,score, message):
 
     Parameters
     -------
-        grid (array): The grid with values to display
-        coords (list): List of column indexes de display
-        score (int): Current player score (number of tries)
-        message (str): Message to display
+        grid : array
+            The grid with values to display
+        coords : list
+            List of column indexes de display
+        score : int
+            Current player score (number of tries)
+        message : str 
+            Message to display
     """
 
     print("Bataille Navale :\n\n")
@@ -36,12 +40,18 @@ def attack (x : str, y : int, boat_coord : dict[str, list[tuple[int, int]]], att
 
     Parameters
     -------
-        x (str): Row coordinate of player attack
-        y (int): Column coordinate of player attack
-        boat_coord (dict): Dictionnary with boat coordinates
-        attack_grid (array): Current grid with player hits and misses
-        score (int) : Current number of player attempts
-        coord_list (list): Names of rows (x)
+        x : str
+            Row coordinate of player attack
+        y : int
+            Column coordinate of player attack
+        boat_coord : dict
+            Dictionnary with boat coordinates
+        attack_grid : array
+            Current grid with player hits and misses
+        score : int
+            Current number of player attempts
+        coord_list : list 
+            Names of rows (x)
     
     Returns
     -------
@@ -81,9 +91,12 @@ def check_sink (boat_hit, boat_coord, attack_grid):
 
     Parameters
     -------
-        boat_hit (str): Name of the boat hit by the attack
-        boat_coord (dict): Dictionnary with boat coordinates
-        attack_grid (array): Current grid with player hits and misses
+        boat_hit : str
+            Name of the boat hit by the attack
+        boat_coord : dict
+            Dictionnary with boat coordinates
+        attack_grid : array 
+            Current grid with player hits and misses
     
     Returns
     -------
