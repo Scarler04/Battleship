@@ -1,177 +1,56 @@
-import numpy as np
-
-def Affichage (grid,coords):
-    print("Bataille Navale :\n\n\n")
-    print("    1   2   3   4   5   6   7   8   9   10")
-    for i in range (21) :
-        if i%2 == 0 :
-            print ("   ---------------------------------------  ")
-        if i%2 == 1 :
-            print(f"{coords[i//2]} | {grid[i//2][0]} | {grid[i//2][1]} | {grid[i//2][2]} | {grid[i//2][3]} | {grid[i//2][4]} | {grid[i//2][5]} | {grid[i//2][6]} | {grid[i//2][7]} | {grid[i//2][8]} | {grid[i//2][9]} |")
-
-
-class Joueur :
-
-    def __init__ (self):
-        self.score = 0
-
-    def attack (self, x, y) :
-        self.score += 1
-        return 
+# def place_boats():  
+#     """
+#     Generates random boat coordinates
     
-    def place_boats() :
-        return
+#     Returns:
+#         dict:
+#             A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
+#     """
+#     bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}       # Dictionary of boat lengths
+#     dict_bateau = {}                                
+#     case_occupe = []
+#     for symbole,taille in bateaux.items():          # Browse the dictionary that we introduce at the begining
+#         invalid = False                             # Booleen to see if we can put the boat or no (if the boat exceeds the grid or if the boat overlap another boat )
+#         while invalid==False:    
+#             ligne = random.randint(0,9)             # Stock the random coordonate in the variable "ligne" and the variable "colonne"
+#             colonne = random.randint(0,9)
+#             orientation = random.choice(["H","V"])  # Choose boat direction (H : horizontal, V : vertical)
+#             pos = []
+#             if orientation=="H":
+#                 if colonne+taille<=10:              # Check if the boat fits on the grid using generated coordinates and direction
+#                     for i in range(taille):
+#                         p = (ligne,colonne+i)        
+#                         pos.append(p)
+#                                                      # List of boat's coordinates
+#                 else:
+#                     col = colonne-taille 
+#                     for i in range(taille):
+#                         p = (ligne,col+i)
+#                         pos.append(p)                                                   #if the boat don't fits on the grid
+                                           
+#             else:                                    # Same for vertical
+#                 if ligne+taille<=10:
+#                     for i in range(taille):
+#                         p = (ligne+i,colonne)
+#                         pos.append(p)
+#                 else:
+#                     li = ligne-taille
+#                     for i in range(taille):
+#                         p = (li+i,colonne)
+#                         pos.append(p)
+
+#             if pos!=[]:
+#                 chevauchement = False
+#                 for k in pos:
+#                     if k in case_occupe:
+#                         chevauchement=True
+#                 if chevauchement==False:
+#                     dict_bateau[symbole] = pos 
+#                     for x in pos:
+#                         case_occupe.append(x)       # We add the coordinates in the list to make sure that we have no duplicates
+#                     invalid=True
+#     return dict_bateau
 
 
-def show_boat(grid, coords, message):
-    print("\nBataille Navale :\n")
-    print("    " + "   ".join(str(i) for i in range(1, 11)))
-    sep = "   " + "-" * 39
-
-    for i, row in enumerate(grid):
-        print(sep)
-        if i == 7:
-            print(f"{coords[i]} | " + " | ".join(row) + f" |   {message}")
-        else:
-            print(f"{coords[i]} | " + " | ".join(row) + " |")
-    print(sep)
-
-
-def positions(x, y, orientation, taille):
-    pos = []
-    if orientation == "H":
-        if y + taille > 10:
-            return False
-        for i in range(taille):
-            pos.append((x, y + i))
-    else:
-        if x + taille > 10:
-            return False
-        for i in range(taille):
-            pos.append((x + i, y))
-    return pos
-
-
-def chevauchement(pos, cases_occup):
-    return any(p in cases_occup for p in pos)
-
-
-def placer_bateau(symbole, pos, attack_grid, cases_occup):
-    for (l, c) in pos:
-        attack_grid[l][c] = symbole
-        cases_occup.append((l, c))
-
-
-def placement(symbole, nom, taille, x, y, orientation, attack_grid, cases_occup, coord_list):
-
-    if x.upper() not in coord_list or not y.isdigit():
-        return None, "Coordonnées invalides."
-
-    ligne = coord_list.index(x.upper())
-    col = int(y) - 1
-
-    if col < 0 or col >= 10:
-        return None, "Colonne invalide."
-
-    pos = positions(ligne, col, orientation, taille)
-    if pos is False:
-        return None, "Le bateau dépasse de la grille."
-
-    if chevauchement(pos, cases_occup):
-        return None, "Le bateau chevauche un autre."
-
-    placer_bateau(symbole, pos, attack_grid, cases_occup)
-    return pos, f"{nom} placé !"
-
-
-def placer_un_bateau(symbole, nom, taille, attack_grid, cases_occup, coord_list):
-    valide = False
-    while not valide:
-        print(f"Nouvelles coordonnées pour {nom} ({taille} cases)")
-        x = input("Ligne (A-J) : ")
-        y = input("Colonne (1-10) : ")
-
-        orientation = "H"
-        if taille > 1:
-            orientation = input("Orientation H/V : ").upper()
-
-        pos, message = placement(symbole, nom, taille, x, y, orientation,attack_grid, cases_occup, coord_list)
-
-        show_boat(attack_grid, coord_list, message)
-
-        if pos is not None:
-            return pos
-
-
-def grille_joueur():
-    attack_grid = np.full((10, 10), " ")
-    cases_occup = []
-    dict_bateaux = {}
-    return attack_grid, cases_occup, dict_bateaux
-
-
-if __name__ == "__main__":
-
-    coord_list = ["A","B","C","D","E","F","G","H","I","J"]
-    boat_names = {
-        "P": ("Porte-Avion", 5),
-        "C": ("Croiseur", 4),
-        "S": ("Sous-marin", 3),
-        "T": ("Torpilleur", 2),
-        "B": ("Barque", 1)
-    }
-
-    attack_grid, cases_occup, dict_bateaux = grille_joueur()
-
-    message = "Placement des bateaux"
-    show_boat(attack_grid, coord_list, message)
-
-    for symbole, (nom, taille) in boat_names.items():
-        valide = False
-        while not valide:
-            print(f"Où placer {nom} ({taille} cases) ?")
-            x = input("Ligne (A-J) : ")
-            y = input("Colonne (1-10) : ")
-
-            orientation = "H"
-            if taille > 1:
-                orientation = input("Orientation H/V : ").upper()
-
-            pos, message = placement(symbole, nom, taille, x, y, orientation,attack_grid, cases_occup, coord_list)
-
-            show_boat(attack_grid, coord_list, message)
-
-            if pos is not None:
-                dict_bateaux[symbole] = pos
-                valide = True
-    OK = True
-    while OK:
-        o = input("Voulez-vous changer la place d'un bateau ? (O/N) : ").upper().strip()
-        if o == "N":
-            OK = False
-        elif o == "O":
-            s = input("Quel bateau ? (P/C/S/T/B) : ").upper().strip()
-            if s in boat_names:
-                nom, taille = boat_names[s]
-                anciennes = dict_bateaux[s]
-                for (l, c) in anciennes:
-                    attack_grid[l][c] = " "
-                    cases_occup.remove((l, c))
-
-                show_boat(attack_grid, coord_list, "Bateau retiré")
-                nouvelles = placer_un_bateau(s, nom, taille, attack_grid, cases_occup, coord_list)
-                dict_bateaux[s] = nouvelles
-            else:
-                print("Symbole invalide.")
-        else:
-            print("Choix invalide.")
-    print(dict_bateaux)
-
-
-if  __name__ == "__main__" :
-    grid_act = np.full(shape= [10,10], fill_value= " ")
-    coord_list = ["A","B","C","D","E","F","G","H","I","J"]
-    Affichage(gird= grid_act, coords= coord_list)
-
-
+# print(place_boats())
 
