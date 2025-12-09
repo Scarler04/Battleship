@@ -153,8 +153,8 @@ def main ():
             elif (boat_hit == "Fail") :
                 bot_message = f"{bot_name} entered invalid coordinates"
 
-            if bot_tries >= 100 :
-                raise BotLoopError ("Bot exceeded 100 failed attempts")
+        if bot_tries >= 100 :
+            raise BotLoopError ("Bot exceeded 100 failed attempts")
                 
         if boat_hit != "Fail" :
             bot_tries = 0
@@ -177,5 +177,7 @@ if __name__ == "__main__" :
             if play_again.upper().strip() == "N" :
                 play = False
     except Exception as e :
+        print("\n######################################################################\n")
         print(f"An error has occured : {e}")
-        print("Please check you satisfy all requirements to launch the game")
+        print("\nPlease check you satisfy all requirements to launch the game \n")# insert github requirement link
+        print("\n######################################################################\n")
