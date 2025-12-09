@@ -3,6 +3,25 @@ import random
 from interface import placing_boats_grid
 
 class BasePlayer :
+    """
+    Base class for all Battleship players.
+
+    Parameters
+    ----------
+        name : str
+            Name of the player.
+
+    Attributes
+    ----------
+        name : str
+            Player's display name.
+        boats_left : int
+            Number of boats still afloat.
+        grid : ndarray
+            10x10 grid representing the player's board.
+        boat_coords : dict[str, list[tuple[int, int]]]
+            Dictionary mapping boat symbols to lists of occupied coordinates.
+    """
 
     def __init__ (self, name) :
         self.name = name 
@@ -14,13 +33,14 @@ class BasePlayer :
         """
         Process an attack on the battleship grid
 
-        Parameters:
+        Parameters
+        ----------
             x : str
                 Row coordinate of attack
             y : int
                 Column coordinate of attack
             boat_coord : dict
-                Dictionnary with boat coordinates of attacked player
+                Dictionnary containing all boat coordinates of attacked player
             attack_grid : array
                 Current grid of attacked player
             score : int
@@ -30,11 +50,12 @@ class BasePlayer :
             player : bool
                 True if player attack, False if bot attack
         
-        Returns:
+        Returns
+        ----------
             tuple: A tuple containing:
-                - str: "Fail" if coordinates already attacked, "Miss" if missed, or boat name if hit
-                - bool: True if a boat was sunk, False otherwise
-                - int: Updated player score
+                - str : "Fail" if coordinates already attacked, "Miss" if missed, or boat name if hit
+                - bool : True if a boat was sunk, False otherwise
+                - int : Updated player score
         """
         if player :
             x = coord_list.index(x.upper().strip()) # Get row index from letter input (A-J => 0-9)
@@ -67,16 +88,18 @@ class BasePlayer :
         """
         Check if attack sinks a boat
 
-        Parameters:
+        Parameters
+        ----------
             boat_hit : str
-                Name of the boat hit by the attack
+                Symbol of the boat hit by the attack
             boat_coord : dict
-                Dictionnary with boat coordinates of attacked player
+                Dictionnary containing all boat coordinates of attacked player
             attack_grid : array
                 Current grid of attacked player
         
-        Returns:
-            bool: 
+        Returns
+        ----------
+            bool : 
                 True if boat is sunk, False otherwise
         """
 
@@ -100,16 +123,54 @@ class BasePlayer :
 
 
 
-
-
-
 class Player (BasePlayer) :
+    """
+    Class representing a human Battleship player.
+
+    Parameters
+    ----------
+        name : str
+            Username of the player
+
+    Attributes
+    ----------
+        score : int
+            Number of valid attack attempts made by the player
+    """
 
     def __init__(self, name):
         super().__init__(name)
         self.score = 0
 
     def place_boat (self, symbole, nom, taille, x, y, orientation, cases_occup, coord_list):
+        """
+        Place a boat on the player's grid.
+
+        Parameters
+        ----------
+            symbole : str
+                Boat symbol used on the grid
+            nom : str
+                Full name of the boat
+            taille : int
+                Length of the boat
+            x : str
+                Row coordinate of the boat (A-J)
+            y : str
+                Column coordinate of the boat (1-10).
+            orientation : str
+                Orientation of the boat: "H" for horizontal or "V" for vertical.
+            cases_occup : list
+                List of already occupied grid coordinates.
+            coord_list : list
+                List of allowed row labels ("A"-"J").
+
+        Returns
+        ----------
+            tuple :
+                - list | None : List of coordinates if the placement succeeds, else None.
+                - str : Status message describing the result of placement.
+        """
         
         if x.upper() not in coord_list or not y.isdigit():
             return None, "Coordonnées invalides."
@@ -159,8 +220,9 @@ class Bot (BasePlayer) :
         """
         Generates random boat coordinates
         
-        Returns:
-            dict:
+        Returns
+        ----------
+            dict :
                 A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
         """
         bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}       # Dictionary of boat lengths
@@ -200,6 +262,20 @@ class Bot (BasePlayer) :
         return dict_bateau
 
     def attack (self, grid : np.ndarray, boat_coord) :
+        """
+        Perform an attack, depending on the bot's difficulty level.
+
+        Parameters:
+            grid : ndarray
+                Grid to attack
+            boat_coord : dict
+                Dictionnary containing all boat coordinates of attacked player
+
+        Returns:
+            tuple:
+                - str: "Miss", "Fail", or the boat symbol if a boat was hit.
+                - bool: True if the targeted boat was sunk, False otherwise.
+        """
         if self.difficulty == 0 :
             indexes = np.where(~np.isin(grid, ["*", "+", "X"]))
             L = [(i,j) for i, j in zip(indexes[0],indexes[1])]
