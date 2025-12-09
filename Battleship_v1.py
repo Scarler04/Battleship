@@ -5,7 +5,8 @@ def show_grid(grid, coords,score, message):
     """
     Displays current grid and score
 
-    Parameters:
+    Parameters
+    -------
         grid (array): The grid with values to display
         coords (list): List of column indexes de display
         score (int): Current player score (number of tries)
@@ -33,14 +34,17 @@ def attack (x : str, y : int, boat_coord : dict[str, list[tuple[int, int]]], att
     """
     Process an attack on the battleship grid
 
-    Parameters:
+    Parameters
+    -------
         x (str): Row coordinate of player attack
         y (int): Column coordinate of player attack
         boat_coord (dict): Dictionnary with boat coordinates
         attack_grid (array): Current grid with player hits and misses
+        score (int) : Current number of player attempts
         coord_list (list): Names of rows (x)
     
-    Returns:
+    Returns
+    -------
         tuple: A tuple containing:
             - str: "Fail" if coordinates already attacked, "Miss" if missed, or boat name if hit
             - bool: True if a boat was sunk, False otherwise
@@ -75,12 +79,14 @@ def check_sink (boat_hit, boat_coord, attack_grid):
     """
     Check if player attack sinks a boat
 
-    Parameters:
+    Parameters
+    -------
         boat_hit (str): Name of the boat hit by the attack
         boat_coord (dict): Dictionnary with boat coordinates
         attack_grid (array): Current grid with player hits and misses
     
-    Returns:
+    Returns
+    -------
         bool: 
             True if boat is sunk, False otherwise
     """
@@ -102,65 +108,55 @@ def check_sink (boat_hit, boat_coord, attack_grid):
     else :
         return False
 
-
-# def place_boats():  
-#     """
-#     Generates random boat coordinates
+def place_boats():  
+    """
+    Generates random boat coordinates
     
-#     Returns:
-#         dict:
-#             A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
-#     """
-#     bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}       # Dictionary of boat lengths
-#     dict_bateau = {}                                
-#     case_occupe = []
-#     for symbole,taille in bateaux.items():          # Browse the dictionary that we introduce at the begining
-#         invalid = False                             # Booleen to see if we can put the boat or no (if the boat exceeds the grid or if the boat overlap another boat )
-#         while invalid==False:    
-#             ligne = random.randint(0,9)             # Stock the random coordonate in the variable "ligne" and the variable "colonne"
-#             colonne = random.randint(0,9)
-#             orientation = random.choice(["H","V"])  # Choose boat direction (H : horizontal, V : vertical)
-#             pos = []
-#             if orientation=="H":
-#                 if colonne+taille<=10:              # Check if the boat fits on the grid using generated coordinates and direction
-#                     for i in range(taille):
-#                         p = (ligne,colonne+i)        
-#                         pos.append(p)
-#                                                      # List of boat's coordinates
-#                 else:
-#                     col = colonne-taille 
-#                     for i in range(taille):
-#                         p = (ligne,col+i)
-#                         pos.append(p)                                                   #if the boat don't fits on the grid
-                                           
-#             else:                                    # Same for vertical
-#                 if ligne+taille<=10:
-#                     for i in range(taille):
-#                         p = (ligne+i,colonne)
-#                         pos.append(p)
-#                 else:
-#                     li = ligne-taille
-#                     for i in range(taille):
-#                         p = (li+i,colonne)
-#                         pos.append(p)
+    Returns
+    -------
+        dict:
+            A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
+    """
+    bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}       # Dictionary of boat lengths
+    dict_bateau = {}                                
+    case_occupe = []
+    for symbole,taille in bateaux.items():          # Browse the dictionary that we introduce at the begining
+        invalid = False                             # Booleen to see if we can put the boat or no (if the boat exceeds the grid or if the boat overlap another boat )
+        while invalid==False:    
+            ligne = random.randint(0,9)             # Stock the random coordonate in the variable "ligne" and the variable "colonne"
+            colonne = random.randint(0,9)
+            orientation = random.choice(["H","V"])  # Choose boat direction (H : horizontal, V : vertical)
+            pos = []
+            if orientation=="H":
+                if colonne+taille<=10:              # Check if the boat fits on the grid using generated coordinates and direction
+                    for i in range(taille):
+                        p = (ligne,colonne+i)        
+                        pos.append(p)               # List of boat's coordinates
+                else:
+                    pos = []                        
+            else:                                    # Same for vertical
+                if ligne+taille<=10:
+                    for i in range(taille):
+                        p = (ligne+i,colonne)
+                        pos.append(p)
+                else:
+                    pos = []
+            if pos!=[]:
+                chevauchement = False
+                for k in pos:
+                    if k in case_occupe:
+                        chevauchement=True
+                if chevauchement==False:
+                    dict_bateau[symbole] = pos 
+                    for x in pos:
+                        case_occupe.append(x)       # We add the coordinates in the list to make sure that we have no duplicates
+                    invalid=True
+    return dict_bateau
 
-#             if pos!=[]:
-#                 chevauchement = False
-#                 for k in pos:
-#                     if k in case_occupe:
-#                         chevauchement=True
-#                 if chevauchement==False:
-#                     dict_bateau[symbole] = pos 
-#                     for x in pos:
-#                         case_occupe.append(x)       # We add the coordinates in the list to make sure that we have no duplicates
-#                     invalid=True
-#     return dict_bateau
-
-
-# print(place_boats())
-
-
-if  __name__ == "__main__" :   
+def main () :
+    """
+    Starts Battleship game
+    """
     coord_list = ["A","B","C","D","E","F","G","H","I","J"] # List of row indexes
     boat_names = {"P":"le Porte-Avion", "C": "le Croiseur", "S" : "le Sous-marin", "T" : " le Torpilleur", "B" : "la Barque"} # Boat names (for boat sunk message)
     play = True 
@@ -178,7 +174,7 @@ if  __name__ == "__main__" :
             x = input("Enter the row to attack (A-J) : ")
             y = input("Enter the column to attack (1-10) : ")
             # Check if input is valid
-            if (x.upper().strip() in coord_list) & (y.strip().isnumeric()) :
+            if (x.upper().strip() in coord_list) & (y.isnumeric()) :
                 if 1<=int(y)<=10 :
                     boat_hit, sunk, score = attack(x,int(y),boat_coords,attack_grid,score,coord_list)
                     if sunk :
@@ -187,7 +183,6 @@ if  __name__ == "__main__" :
                         if boats_left == 0 :
                             won = True
                     elif (boat_hit != "Miss") & (boat_hit != "Fail") :
-                        print(boat_hit)
                         message = "Touché !"
                     elif boat_hit == "Miss" :
                         message = 'Raté !'
@@ -208,3 +203,5 @@ if  __name__ == "__main__" :
             play = False
 
 
+if  __name__ == "__main__" :   
+    main()
