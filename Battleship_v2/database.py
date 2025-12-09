@@ -103,4 +103,4 @@ def update_scoreboard (username : str, score : int, path : str) :
 
 if __name__ == "__main__" :
     path = create_database()
-    update_scoreboard("cici",50,path)
+    update_scoreboard("Test",50,path)
