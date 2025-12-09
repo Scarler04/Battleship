@@ -1,7 +1,6 @@
-import numpy as np
-import sys
 import random
 
+from exceptions import BotLoopError
 from database import create_database, update_scoreboard
 from players import Player, Bot
 from interface import game_init, placing_boats_grid, show_grids, ascii_art
@@ -41,7 +40,7 @@ def main ():
     for symbole, (nom, taille) in boat_names.items():
         valide = False
         while not valide:
-            print(f"Where do you sih to place the {nom} (length {taille}) ?")
+            print(f"Where do you want to place the {nom} (length {taille}) ?")
             x = input("Row (A-J) : ")
             y = input("Column (1-10) : ")
 
@@ -59,7 +58,7 @@ def main ():
 
     OK = True
     while OK:
-        o = input("Do you wish to change a boat's position ? (Y/N) : ").upper().strip()
+        o = input("Do you want to change a boat's position ? (Y/N) : ").upper().strip()
         if o == "N":
             OK = False
         elif o == "Y":
@@ -107,7 +106,8 @@ def main ():
     starter = turn
     player_message = f'{players[turn]} is starting !'
     bot_message = f"{bot_name} is your opponent this game !"
-    
+    bot_tries = 0
+
     while not bot_won and not player_won :
 
         if turn == starter :
@@ -140,6 +140,7 @@ def main ():
 
         elif turn == 1 :
             boat_hit, sunk = b.attack(p.grid,p.boat_coords)
+            bot_tries += 1
             if sunk :
                 bot_message = f"{bot_name} sunk {boat_names[boat_hit][0]}"
                 b.boats_left -= 1
@@ -151,8 +152,12 @@ def main ():
                 bot_message = f'{bot_name} missed !'
             elif (boat_hit == "Fail") :
                 bot_message = f"{bot_name} entered invalid coordinates"
+
+            if bot_tries >= 100 :
+                raise BotLoopError ("Bot exceeded 100 failed attempts")
                 
         if boat_hit != "Fail" :
+            bot_tries = 0
             turn = (turn + 1) % 2
     
     show_grids (p.grid,b.grid,coord_list,p.score,player_message, bot_message)
