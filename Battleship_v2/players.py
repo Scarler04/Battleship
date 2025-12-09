@@ -53,9 +53,9 @@ class BasePlayer :
         Returns
         ----------
             tuple: A tuple containing:
-                - str : "Fail" if coordinates already attacked, "Miss" if missed, or boat name if hit
-                - bool : True if a boat was sunk, False otherwise
-                - int : Updated player score
+                - str: "Fail" if coordinates already attacked, "Miss" if missed, or boat name if hit
+                - bool: True if a boat was sunk, False otherwise
+                - int: Updated player score
         """
         if player :
             x = coord_list.index(x.upper().strip()) # Get row index from letter input (A-J => 0-9)
@@ -168,8 +168,8 @@ class Player (BasePlayer) :
         Returns
         ----------
             tuple :
-                - list | None : List of coordinates if the placement succeeds, else None.
-                - str : Status message describing the result of placement.
+                - list | None: List of coordinates if the placement succeeds, else None.
+                - str: Status message describing the result of placement.
         """
         
         if x.upper() not in coord_list or not y.isdigit():
@@ -211,10 +211,23 @@ class Player (BasePlayer) :
 
 
 class Bot (BasePlayer) :
+    """
+    Class representing the AI Battleship player
+
+    Parameters
+    ----------
+        name : str
+            Name of the bot
+        diff : int, optional
+            Difficulty level (0 = random attacks, 1 = smarter bot)
+        hit_coords : list
+            Coordinates of previously hit boat segments that belong to boats not yet sunk
+    """
 
     def __init__(self, name, diff = 0):
         super().__init__(name)
         self.difficulty = diff
+        self.hit_coords = []
 
     def place_boats (self) :
         """
@@ -261,7 +274,7 @@ class Bot (BasePlayer) :
                         invalid=True
         return dict_bateau
 
-    def attack (self, grid : np.ndarray, boat_coord) :
+    def attack (self, grid : np.ndarray, boat_coord : dict[str, list[tuple[int, int]]]) :
         """
         Perform an attack, depending on the bot's difficulty level.
 
@@ -280,7 +293,99 @@ class Bot (BasePlayer) :
             indexes = np.where(~np.isin(grid, ["*", "+", "X"]))
             L = [(i,j) for i, j in zip(indexes[0],indexes[1])]
             attack_coords = random.choice(L)
-            boat_hit, sunk, score = self.register_attack(x= attack_coords[0], y= attack_coords[1],boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
+            boat_hit, sunk, _ = self.register_attack(x= attack_coords[0], y= attack_coords[1],boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
             return boat_hit, sunk
         elif self.difficulty == 1 :
-            pass
+            invalids = ["*", "+", "X"]
+            if len(self.hit_coords) == 0 :
+                indexes = np.where(~np.isin(grid, invalids))
+                L = [(i,j) for i, j in zip(indexes[0],indexes[1])]
+                attack_coords = random.choice(L)
+                boat_hit, sunk, _ = self.register_attack(x= attack_coords[0], y= attack_coords[1],boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
+
+                if (boat_hit != "Miss") & (boat_hit != "Fail") & (not sunk):
+                    self.hit_coords.append((attack_coords[0] , attack_coords[1]))
+                elif sunk :
+                    for (k,l) in self.hit_coords :
+                        if grid[k][l] == "X" :
+                            self.hit_coords.remove((k,l))
+                return boat_hit, sunk
+            
+            else :
+                (x,y) = self.hit_coords[0]
+                if ((x,y-1) in self.hit_coords[:1]) | ((x,y+1) in self.hit_coords[:1]) :
+                    orient = 0 # Horizontal
+                elif ((x-1,y) in self.hit_coords[:1]) | ((x+1,y) in self.hit_coords[:1]) :
+                    orient = 1 # Vertical
+                else :
+                    if x in [0,9] :
+                        orient = 0
+                    elif y in [0,9] :
+                        orient = 1
+                    else :
+                        orient = int(int(grid[x][y-1] not in invalids) + int(grid[x][y+1] not in invalids) > int(grid[x-1][y] not in invalids) + int(grid[x+1][y] not in invalids))
+                
+                attempts = 1
+                fire = False
+                while (attempts <= 2) & (not fire):
+                    lineup = [(x,y)]
+
+                    if orient is not None :
+                        dx, dy = (1,0) if orient == 1 else (0,1)
+
+                        i = 1
+                        while (x + i*dx, y + i*dy) in self.hit_coords :
+                            lineup.append ((x + i*dx, y + i*dy))
+                            i+= 1
+
+                        j = 1
+                        while (x - j*dx, y - j*dy) in self.hit_coords :
+                            lineup.insert (0, (x - j*dx, y - j*dy))
+                            j+= 1
+                        
+                        (a_up, b_up) = (x + i*dx, y + i*dy)
+                        (a_down, b_down) = (x - j*dx, y - j*dy)
+
+                        # Check if grid border reached
+                        end_up = False
+                        end_down = False
+                        if -1 in (a_down, b_down) :
+                            end_down = True
+                        if 10 in (a_up, b_up) :
+                            end_up = True
+    
+                        if not end_down :
+                            if grid[a_down][b_down] not in invalids :
+                                boat_hit, sunk, _ = self.register_attack(x= a_down, y= b_down, boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
+                                fire = True
+
+                                if (boat_hit != "Miss") & (boat_hit != "Fail") & (not sunk) :
+                                    self.hit_coords.append((a_down , b_down))
+                            
+                        if (not end_up) & (not fire):
+                            if grid[a_up][b_up] not in invalids :
+                                boat_hit, sunk, _ = self.register_attack(x= a_up, y= b_up, boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
+                                fire = True
+
+                                if (boat_hit != "Miss") & (boat_hit != "Fail") & (not sunk):
+                                    self.hit_coords.append((a_up , b_up))                                    
+                    
+                    if not fire :
+                        attempts +=1
+                        orient = (orient + 1) % 2 # Change orientation
+                
+                if fire :
+                    if sunk :
+                        for (k,l) in self.hit_coords :
+                            if grid[k][l] == "X" :
+                                self.hit_coords.remove((k,l))
+                    return boat_hit, sunk
+                else :
+                    indexes = np.where(~np.isin(grid, ["*", "+", "X"]))
+                    L = [(i,j) for i, j in zip(indexes[0],indexes[1])]
+                    attack_coords = random.choice(L)
+                    boat_hit, sunk, _ = self.register_attack(x= attack_coords[0], y= attack_coords[1],boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
+
+                    if (boat_hit != "Miss") & (boat_hit != "Fail") & (not sunk):
+                        self.hit_coords.append((attack_coords[0] , attack_coords[1]))
+                    return boat_hit, sunk
