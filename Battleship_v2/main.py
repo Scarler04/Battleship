@@ -50,7 +50,7 @@ def main ():
 
             pos, message = P.place_boat(symbole, nom, taille, x, y, orientation, cases_occup, coord_list)
 
-            placing_boats_grid(P.grid, coord_list, message)
+            placing_boats_grid(grid= P.grid, coords= coord_list, message= message)
 
             if pos is not None:
                 P.boat_coords[symbole] = pos
@@ -70,7 +70,7 @@ def main ():
                     P.grid[l][c] = " "
                     cases_occup.remove((l, c))
 
-                placing_boats_grid(P.grid, coord_list, "Boat deleted")
+                placing_boats_grid(grid= P.grid, coords= coord_list, message= "Boat deleted")
 
                 valide = False
 
@@ -83,9 +83,9 @@ def main ():
                     if taille > 1:
                         orientation = input("Orientation H/V : ").upper()
 
-                    nouvelles, message = P.place_boat(s, nom, taille, x, y, orientation, cases_occup, coord_list)
+                    nouvelles, message = P.place_boat(symbole= s, nom= nom, taille= taille, x= x, y= y, orientation= orientation, cases_occup= cases_occup, coord_list= coord_list)
 
-                    placing_boats_grid(P.grid, coord_list, message)
+                    placing_boats_grid(grid= P.grid, coords= coord_list, message= message)
 
                     if nouvelles is not None :
                         valide = True
@@ -119,7 +119,7 @@ def main ():
             # Check if input is valid
             if (x.upper().strip() in coord_list) & (y.isnumeric()) :
                 if 1<=int(y)<=10 :
-                    boat_hit, sunk, P.score = P.register_attack(x,int(y),B.boat_coords,B.grid,P.score,coord_list,True)
+                    boat_hit, sunk, P.score = P.register_attack(x= x, y= int(y), boat_coord= B.boat_coords, attack_grid= B.grid, score= P.score, coord_list= coord_list, player= True)
                     if sunk :
                         player_message = f'You sunk {boat_names[boat_hit][0]} !'
                         P.boats_left -= 1
@@ -139,7 +139,7 @@ def main ():
                 player_message = "Invalid coordinates... Try again !"
 
         elif turn == 1 :
-            boat_hit, sunk = B.attack(P.grid,P.boat_coords)
+            boat_hit, sunk = B.attack(grid= P.grid, boat_coord= P.boat_coords)
             bot_tries += 1
             if sunk :
                 bot_message = f"{bot_name} sunk {boat_names[boat_hit][0]}"
@@ -160,12 +160,12 @@ def main ():
             bot_tries = 0
             turn = (turn + 1) % 2
     
-    show_grids (P.grid,B.grid,coord_list,P.score,player_message, bot_message)
+    show_grids (boat_grid= P.grid, attack_grid= B.grid, coords= coord_list, score= P.score, player_message= player_message, bot_message= bot_message)
 
     ascii_art(player_won= player_won)
 
     if scoreboard_path and player_won :
-        update_scoreboard(P.name,P.score,scoreboard_path)
+        update_scoreboard(username= P.name, score= P.score, path= scoreboard_path)
 
 
 if __name__ == "__main__" :
