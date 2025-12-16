@@ -5,6 +5,10 @@ from PIL import Image
 from username import get_user_name
 import pygame_gui
 
+from colors import Colors
+from position import Position
+from grid import Grid
+
 pygame.init()
 pygame.mixer.init()
 
@@ -50,7 +54,7 @@ def choose_difficulty():
     while choosing:
         mouse_pos = pygame.mouse.get_pos()
 
-        SCREEN.blit(frames[0], (0, 0))
+        SCREEN.blit(frames[0], (0, 0))   #blit c'est pour dessiner
 
         title = get_font(70).render("Choose Difficulty", True, (255, 255, 255))
         SCREEN.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 100))
@@ -68,7 +72,7 @@ def choose_difficulty():
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:
+            if event.type == pygame.MOUSEBUTTONDOWN:       #ça veut dire que l'utilisateur à cliquer
                 if easy_button.check_for_input(mouse_pos):
                     return player_name, "Easy"
                 if hard_button.check_for_input(mouse_pos):
@@ -76,12 +80,67 @@ def choose_difficulty():
 
         pygame.display.update()
         clock.tick(10)
+import random
+
+def place_enemy_ships(enemy_grid, ships_info):
+    for ship in ships_info:
+        placed = False
+        while not placed:
+            row = random.randint(0, enemy_grid.num_rows - 1)
+            col = random.randint(0, enemy_grid.num_cols - 1)
+            orientation = random.choice(["H", "V"])
+            placed = enemy_grid.place_ship(
+                row, col,
+                ship["size"],
+                orientation,
+                ship["id"]
+            )
+
+def bot_attack(player_grid, bot_shots):
+    while True:
+        row = random.randint(0, player_grid.num_rows - 1)
+        col = random.randint(0, player_grid.num_cols - 1)
+
+        if (row, col) not in bot_shots:
+            bot_shots.add((row, col))
+            result = player_grid.hit_cell(row, col)
+            print(f"Tir bot ({row},{col}) : {result}")
+            break
+
 
 
 def play(player_name, difficulty):
+    player_grid = Grid()
+    enemy_grid = Grid()
+
+    grid_width = player_grid.num_cols * player_grid.cell_size
+    grid_height = player_grid.num_rows * player_grid.cell_size
+
+    gap = 80
+    total_width = grid_width * 2 + gap
+
+    start_x = (SCREEN_WIDTH - total_width) // 2
+    offset_y = (SCREEN_HEIGHT - grid_height) // 2
+
+    player_offset_x = start_x
+    enemy_offset_x = start_x + grid_width + gap
+
+    placing_phase = True
+    current_ship_index = 0
+    player_turn = False
+    bot_shots = set()   # mémorise les cases déjà tirées par l'ordi
+
+
+    ships_info = [
+        {"id": 1, "size": 5, "orientation": "H"},
+        {"id": 2, "size": 4, "orientation": "V"},
+        {"id": 3, "size": 3, "orientation": "H"},
+        {"id": 4, "size": 2, "orientation": "V"},
+        {"id": 5, "size": 1, "orientation": "H"}
+    ]
+
     while True:
         mouse_pos = pygame.mouse.get_pos()
-
         SCREEN.blit(frames[0], (0, 0))
 
         info_text = get_font(40).render(
@@ -90,20 +149,106 @@ def play(player_name, difficulty):
         )
         SCREEN.blit(info_text, (30, 30))
 
-        back_button = Button((SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80),
-                             "BACK", get_font(30), "white", "red")
+        # === TITRES DES GRILLES ===
+        title_font = get_font(30)
+        SCREEN.blit(title_font.render("YOUR GRID", True, (255, 255, 255)),
+                    (player_offset_x, offset_y - 40))
+        SCREEN.blit(title_font.render("ENEMY GRID", True, (255, 255, 255)),
+                    (enemy_offset_x, offset_y - 40))
+
+        # === BOUTON BACK ===
+        back_button = Button(
+            (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80),
+            "BACK", get_font(30), "white", "red"
+        )
         back_button.update(SCREEN)
 
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
-            if event.type == pygame.MOUSEBUTTONDOWN:
+
+            elif event.type == pygame.MOUSEBUTTONDOWN:
+                x, y = event.pos
+
                 if back_button.check_for_input(mouse_pos):
                     return
 
+                # --- GRILLE JOUEUR ---
+                row = (y - offset_y) // player_grid.cell_size
+                col = (x - player_offset_x) // player_grid.cell_size
+
+                if 0 <= row < player_grid.num_rows and 0 <= col < player_grid.num_cols:
+                    if placing_phase:
+                        ship = ships_info[current_ship_index]
+                        success = player_grid.place_ship(
+                            row, col,
+                            ship["size"],
+                            ship["orientation"],
+                            ship["id"]
+                        )
+                        if success:
+                            current_ship_index += 1
+                            if current_ship_index >= len(ships_info):
+                                placing_phase = False
+                                place_enemy_ships(enemy_grid, ships_info)
+                                player_turn = True   
+                                print("Tous les bateaux placés ! Combat lancé !")
+
+
+
+                # --- GRILLE ENNEMIE ---
+                # --- GRILLE ENNEMIE ---
+                row_e = (y - offset_y) // enemy_grid.cell_size
+                col_e = (x - enemy_offset_x) // enemy_grid.cell_size
+
+                if 0 <= row_e < enemy_grid.num_rows and 0 <= col_e < enemy_grid.num_cols:
+                    if not placing_phase and player_turn:
+                        # le joueur tire sur la grille ennemie
+                        result = enemy_grid.hit_cell(row_e, col_e)
+                        print(f"Tir joueur ({row_e},{col_e}) : {result}")
+                        player_turn = False  # ensuite c'est au bot
+                if not player_turn and not placing_phase:
+                    pygame.time.delay(500)
+                    bot_attack(player_grid, bot_shots)
+                    player_turn = True
+
+
+
+            elif event.type == pygame.KEYDOWN:
+                if placing_phase and event.key == pygame.K_r:
+                    ship = ships_info[current_ship_index]
+                    ship["orientation"] = "V" if ship["orientation"] == "H" else "H"
+
+        player_grid.draw(SCREEN, player_offset_x, offset_y, hide_ships=False)
+        enemy_grid.draw(SCREEN, enemy_offset_x, offset_y, hide_ships=True)
+
+
+        # === LÉGENDE ===
+        texts = [
+            ("Eau", Colors.water),
+            ("Bateau 1", Colors.green),
+            ("Bateau 2", Colors.orange),
+            ("Bateau 3", Colors.purple),
+            ("Bateau 4", Colors.cyan),
+            ("Bateau 5", Colors.blue),
+            ("Touché", Colors.red),
+            ("Coulé", Colors.dark_red)
+        ]
+
+        legend_x = 50
+        legend_height = len(texts) * 30
+        legend_y_start = (SCREEN_HEIGHT - legend_height) // 2
+
+        for i, (name, color) in enumerate(texts):
+            y = legend_y_start + i * 30
+            pygame.draw.rect(SCREEN, color, (legend_x, y, 20, 20))
+            text = pygame.font.SysFont("Arial", 24).render(name, True, (255, 255, 255))
+            SCREEN.blit(text, (legend_x + 30, y))
+
         pygame.display.update()
-        clock.tick(10)
+        clock.tick(60)
+
 
 def score():
     while True:
