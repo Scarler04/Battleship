@@ -8,12 +8,16 @@ import pygame_gui
 from colors import Colors
 from position import Position
 from grid import Grid
+import random
+
 
 pygame.init()
 pygame.mixer.init()
 
 pygame.mixer.music.load("Tobu  Candyland.mp3")
 pygame.mixer.music.play(-1)
+water_sound = pygame.mixer.Sound("water-splash-199583.mp3")
+explosion_sound = pygame.mixer.Sound("large-underwater-explosion-sfx-450455.mp3")
 
 
 
@@ -25,7 +29,7 @@ score_image = pygame.image.load("Designer (1).png")
 score_image = pygame.transform.scale(score_image, (SCREEN_WIDTH // 2, SCREEN_HEIGHT))
 
 
-# Charger GIF
+# Charger GIF   #Vu sur internet
 gif = Image.open("ocean waves GIF by weinventyou.gif")
 frames = []
 
@@ -80,7 +84,6 @@ def choose_difficulty():
 
         pygame.display.update()
         clock.tick(10)
-import random
 
 def place_enemy_ships(enemy_grid, ships_info):
     for ship in ships_info:
@@ -104,9 +107,15 @@ def bot_attack(player_grid, bot_shots):
         if (row, col) not in bot_shots:
             bot_shots.add((row, col))
             result = player_grid.hit_cell(row, col)
-            print(f"Tir bot ({row},{col}) : {result}")
-            break
 
+            # SOUND EFFECTS
+            if result not in ["already hit", "already miss"]:
+                if result == "miss":
+                    water_sound.play()
+                elif result == "hit" or result.startswith("sunk_"):
+                    explosion_sound.play()
+
+            return result
 
 
 def play(player_name, difficulty):
@@ -128,8 +137,24 @@ def play(player_name, difficulty):
     placing_phase = True
     current_ship_index = 0
     player_turn = False
-    bot_shots = set()   # mémorise les cases déjà tirées par l'ordi
 
+    bot_shots = set()
+    player_shots = 0
+    bot_shots_count = 0
+
+    game_over = False
+    result_text = ""
+
+    last_message = ""
+    message_timer = 0
+
+    ship_names = {
+        "1": "Le Porte-avion",
+        "2": "Le Croiseur",
+        "3": "Le Sous-marin",
+        "4": "Le Torpilleur",
+        "5": "La Barque"
+    }
 
     ships_info = [
         {"id": 1, "size": 5, "orientation": "H"},
@@ -141,45 +166,54 @@ def play(player_name, difficulty):
 
     while True:
         mouse_pos = pygame.mouse.get_pos()
-        SCREEN.blit(frames[0], (0, 0))
+        SCREEN.blit(frames[0], (0, 0))  # fond GIF
 
+        # --- Affichage info ---
         info_text = get_font(40).render(
             f"Player: {player_name.upper()}   Difficulty: {difficulty.upper()}",
             True, (255, 255, 255)
         )
         SCREEN.blit(info_text, (30, 30))
 
-        # === TITRES DES GRILLES ===
+        score_text = get_font(30).render(
+            f"Player shots: {player_shots}   Bot shots: {bot_shots_count}",
+            True, (255, 255, 255)
+        )
+        SCREEN.blit(score_text, (30, 80))
+
+        if message_timer > 0:
+            msg = get_font(30).render(last_message, True, (255, 200, 200))
+            SCREEN.blit(msg, (30, 120))
+            message_timer -= 1
+
         title_font = get_font(30)
         SCREEN.blit(title_font.render("YOUR GRID", True, (255, 255, 255)),
                     (player_offset_x, offset_y - 40))
         SCREEN.blit(title_font.render("ENEMY GRID", True, (255, 255, 255)),
                     (enemy_offset_x, offset_y - 40))
 
-        # === BOUTON BACK ===
-        back_button = Button(
-            (SCREEN_WIDTH // 2, SCREEN_HEIGHT - 80),
-            "BACK", get_font(30), "white", "red"
-        )
-        back_button.update(SCREEN)
-
+        # --- Événements ---
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 pygame.quit()
                 sys.exit()
 
+            # Rotation bateau
+            elif event.type == pygame.KEYDOWN:
+                if placing_phase and event.key == pygame.K_r:
+                    ship = ships_info[current_ship_index]
+                    ship["orientation"] = "V" if ship["orientation"] == "H" else "H"
+
+            # Clic souris
             elif event.type == pygame.MOUSEBUTTONDOWN:
                 x, y = event.pos
 
-                if back_button.check_for_input(mouse_pos):
-                    return
+                if placing_phase:
+                    # Placement bateau joueur
+                    row = (y - offset_y) // player_grid.cell_size
+                    col = (x - player_offset_x) // player_grid.cell_size
 
-                # --- GRILLE JOUEUR ---
-                row = (y - offset_y) // player_grid.cell_size
-                col = (x - player_offset_x) // player_grid.cell_size
-
-                if 0 <= row < player_grid.num_rows and 0 <= col < player_grid.num_cols:
-                    if placing_phase:
+                    if 0 <= row < player_grid.num_rows and 0 <= col < player_grid.num_cols:
                         ship = ships_info[current_ship_index]
                         success = player_grid.place_ship(
                             row, col,
@@ -191,40 +225,60 @@ def play(player_name, difficulty):
                             current_ship_index += 1
                             if current_ship_index >= len(ships_info):
                                 placing_phase = False
+                                player_turn = True
                                 place_enemy_ships(enemy_grid, ships_info)
-                                player_turn = True   
-                                print("Tous les bateaux placés ! Combat lancé !")
 
+                else:
+                    # Tir sur grille ennemie
+                    row_e = (y - offset_y) // enemy_grid.cell_size
+                    col_e = (x - enemy_offset_x) // enemy_grid.cell_size
 
+                    if 0 <= row_e < enemy_grid.num_rows and 0 <= col_e < enemy_grid.num_cols:
+                        if player_turn:
+                            result = enemy_grid.hit_cell(row_e, col_e)
 
-                # --- GRILLE ENNEMIE ---
-                # --- GRILLE ENNEMIE ---
-                row_e = (y - offset_y) // enemy_grid.cell_size
-                col_e = (x - enemy_offset_x) // enemy_grid.cell_size
+                            # Sound effects
+                            if result not in ["already hit", "already miss"]:
+                                if result == "miss":
+                                    water_sound.play()
+                                else:
+                                    explosion_sound.play()
 
-                if 0 <= row_e < enemy_grid.num_rows and 0 <= col_e < enemy_grid.num_cols:
-                    if not placing_phase and player_turn:
-                        # le joueur tire sur la grille ennemie
-                        result = enemy_grid.hit_cell(row_e, col_e)
-                        print(f"Tir joueur ({row_e},{col_e}) : {result}")
-                        player_turn = False  # ensuite c'est au bot
-                if not player_turn and not placing_phase:
-                    pygame.time.delay(500)
-                    bot_attack(player_grid, bot_shots)
-                    player_turn = True
+                            if result not in ["already hit", "already miss"]:
+                                player_shots += 1
+                                player_turn = False
 
+                            # Message bateau coulé
+                            if result.startswith("sunk_"):
+                                ship_id = result.split("_")[1]
+                                last_message = f"Tu as coulé {ship_names[ship_id]}"
+                                message_timer = 180
 
+                            if enemy_grid.all_ships_sunk():
+                                game_over = True
+                                result_text = "WINNER"
 
-            elif event.type == pygame.KEYDOWN:
-                if placing_phase and event.key == pygame.K_r:
-                    ship = ships_info[current_ship_index]
-                    ship["orientation"] = "V" if ship["orientation"] == "H" else "H"
+        # Tour du bot
+        if not placing_phase and not player_turn and not game_over:
+            pygame.time.delay(500)
+            result = bot_attack(player_grid, bot_shots)
+            bot_shots_count += 1
+            player_turn = True
+
+            if result.startswith("sunk_"):
+                ship_id = result.split("_")[1]
+                last_message = f"L’ordinateur a coulé {ship_names[ship_id]}"
+                message_timer = 180
+
+            if player_grid.all_ships_sunk():
+                game_over = True
+                result_text = "LOSER"
+
 
         player_grid.draw(SCREEN, player_offset_x, offset_y, hide_ships=False)
         enemy_grid.draw(SCREEN, enemy_offset_x, offset_y, hide_ships=True)
 
 
-        # === LÉGENDE ===
         texts = [
             ("Eau", Colors.water),
             ("Bateau 1", Colors.green),
@@ -246,8 +300,29 @@ def play(player_name, difficulty):
             text = pygame.font.SysFont("Arial", 24).render(name, True, (255, 255, 255))
             SCREEN.blit(text, (legend_x + 30, y))
 
+        if game_over:
+            big_font = get_font(120)
+            text = big_font.render(result_text, True, (255, 0, 0))
+            SCREEN.blit(
+                text,
+                (SCREEN_WIDTH // 2 - text.get_width() // 2,
+                 SCREEN_HEIGHT // 2 - text.get_height() // 2)
+            )
+            info = get_font(30).render(
+                "Press any key to return to menu",
+                True, (255, 255, 255)
+            )
+            SCREEN.blit(
+                info,
+                (SCREEN_WIDTH // 2 - info.get_width() // 2,
+                 SCREEN_HEIGHT // 2 + 100)
+            )
+
         pygame.display.update()
         clock.tick(60)
+
+
+
 
 
 def score():
