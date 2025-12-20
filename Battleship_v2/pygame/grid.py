@@ -44,26 +44,44 @@ class Grid:
         for r,c in positions:
             self.grid[r][c] = ship_id
         return True
+    
     def hit_cell(self, row, col):
         value = self.grid[row][col]
-        if value == 0:  # eau
-            self.grid[row][col] = 30  # 30 = raté
+
+        # --- Eau ---
+        if value == 0:
+            self.grid[row][col] = 30  # raté
             return "miss"
+
+        # --- Bateau intact ---
         elif 1 <= value <= 5:
-            self.grid[row][col] += 10  # touché
             ship_id = value
-            sunk = True
+            self.grid[row][col] +=10
+
             for r in range(self.num_rows):
                 for c in range(self.num_cols):
                     if self.grid[r][c] == ship_id:
-                        sunk = False
-            if sunk:
-                for r in range(self.num_rows):
-                    for c in range(self.num_cols):
-                        if self.grid[r][c] == ship_id + 10:
-                            self.grid[r][c] += 10  # coulé
-            return "hit"
+                        return "hit"   
+
+            for r in range(self.num_rows):
+                for c in range(self.num_cols):
+                    if self.grid[r][c] == ship_id + 10:
+                        self.grid[r][c] += 10  
+
+            return f"sunk_{ship_id}"
+
         elif value == 30:
             return "already miss"
+
         else:
             return "already hit"
+
+        
+
+
+    def all_ships_sunk(self):
+        for row in self.grid:
+            for cell in row:
+                if 1 <= cell <= 5:
+                    return False
+        return True
