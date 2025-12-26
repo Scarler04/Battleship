@@ -76,7 +76,7 @@ def choose_difficulty():
                 pygame.quit()
                 sys.exit()
 
-            if event.type == pygame.MOUSEBUTTONDOWN:       #ça veut dire que l'utilisateur à cliquer
+            if event.type == pygame.MOUSEBUTTONDOWN:       #ça veut dire que l'utilisateur a cliqué
                 if easy_button.check_for_input(mouse_pos):
                     return player_name, "Easy"
                 if hard_button.check_for_input(mouse_pos):
@@ -99,7 +99,7 @@ def place_enemy_ships(enemy_grid, ships_info):
                 ship["id"]
             )
 
-def bot_attack(player_grid, bot_shots):
+def bot_attack_easy(player_grid, bot_shots):
     while True:
         row = random.randint(0, player_grid.num_rows - 1)
         col = random.randint(0, player_grid.num_cols - 1)
@@ -116,11 +116,45 @@ def bot_attack(player_grid, bot_shots):
                     explosion_sound.play()
 
             return result
+def bot_attack_hard(player_grid, bot_shots, bot_targets):    
+    if bot_targets:
+        row, col = bot_targets.pop(0)
+
+        if (row, col) in bot_shots:
+            return "already hit"
+
+    else:
+        while True:
+            row = random.randint(0, player_grid.num_rows - 1)
+            col = random.randint(0, player_grid.num_cols - 1)
+            if (row, col) not in bot_shots:
+                break
+
+    bot_shots.add((row, col))
+    result = player_grid.hit_cell(row, col)
+
+    if result == "hit":
+        for x, y in [(-1,0),(1,0),(0,-1),(0,1)]:
+            r, c = row + x, col + y
+            if 0 <= r < player_grid.num_rows and 0 <= c < player_grid.num_cols:
+                if (r, c) not in bot_shots:
+                    bot_targets.append((r, c))
+
+    if result not in ["already hit", "already miss"]:
+        if result == "miss":
+            water_sound.play()
+        else:
+            explosion_sound.play()
+
+    return result
+
 
 
 def play(player_name, difficulty):
     player_grid = Grid()
     enemy_grid = Grid()
+    bot_targets = []   # mémoire du bot HARD
+
 
     grid_width = player_grid.num_cols * player_grid.cell_size
     grid_height = player_grid.num_rows * player_grid.cell_size
@@ -261,9 +295,14 @@ def play(player_name, difficulty):
         # Tour du bot
         if not placing_phase and not player_turn and not game_over:
             pygame.time.delay(500)
-            result = bot_attack(player_grid, bot_shots)
+            if difficulty == "Easy":
+                result = bot_attack_easy(player_grid, bot_shots)
+            else:
+                result = bot_attack_hard(player_grid, bot_shots, bot_targets)
+
             bot_shots_count += 1
             player_turn = True
+
 
             if result.startswith("sunk_"):
                 ship_id = result.split("_")[1]
@@ -303,27 +342,25 @@ def play(player_name, difficulty):
         if game_over:
             big_font = get_font(120)
             text = big_font.render(result_text, True, (255, 0, 0))
-            SCREEN.blit(
-                text,
-                (SCREEN_WIDTH // 2 - text.get_width() // 2,
-                 SCREEN_HEIGHT // 2 - text.get_height() // 2)
-            )
+            SCREEN.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2,
+                            SCREEN_HEIGHT // 2 - text.get_height() // 2))
             info = get_font(30).render(
-                "Press any key to return to menu",
+                "Press any key or click to return to menu",
                 True, (255, 255, 255)
             )
-            SCREEN.blit(
-                info,
-                (SCREEN_WIDTH // 2 - info.get_width() // 2,
-                 SCREEN_HEIGHT // 2 + 100)
-            )
+            SCREEN.blit(info, (SCREEN_WIDTH // 2 - info.get_width() // 2,
+                            SCREEN_HEIGHT // 2 + 100))
+            
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    pygame.quit()
+                    sys.exit()
+                elif event.type == pygame.KEYDOWN or event.type == pygame.MOUSEBUTTONDOWN:
+                    return 
+
 
         pygame.display.update()
         clock.tick(60)
-
-
-
-
 
 def score():
     while True:
