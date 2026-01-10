@@ -1,7 +1,7 @@
 import random
 
 from exceptions import BotLoopError
-from database import create_database, update_scoreboard
+from database import create_database, update_scoreboard, find_file
 from players import Player, Bot
 from interface import game_init, placing_boats_grid, show_grids, ascii_art
 
@@ -20,6 +20,12 @@ def main ():
     if not scoreboard_path :
         print("Scoreboard not found")
     # update_scoreboard("Test",50,scoreboard_path)
+
+    weightmap_path = find_file (filename= "weightmap_boats.npy")
+    if weightmap_path :
+        weights = np.load(weightmap_path)
+    else :
+        weights = None
     
     coord_list = ["A","B","C","D","E","F","G","H","I","J"]
     boat_names = {
@@ -96,7 +102,7 @@ def main ():
         else:
             print("Invalid choice")
 
-    B.boat_coords = B.place_boats()
+    B.boat_coords = B.place_boats(weights= weights)
 
     bot_won = False
     player_won = False
