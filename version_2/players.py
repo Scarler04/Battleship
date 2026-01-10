@@ -229,50 +229,205 @@ class Bot (BasePlayer) :
         self.difficulty = diff
         self.hit_coords = []
 
-    def place_boats (self) :
+    def random_func(self, weights=None):
         """
-        Generates random boat coordinates
+        Generate random coordinates on the grid
         
-        Returns
+        Parameters
         ----------
-            dict :
-                A dictionnary with boat names as keys and lists of boat coordinates as tuples of two integers as items
+            weights : array, optional
+                2D array (10x10) of probability weights for each cell
+                
+        Returns
+        -------
+            tuple: A tuple containing:
+                - int: Row coordinate (0-9)
+                - int: Column coordinate (0-9)
         """
-        bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}       # Dictionary of boat lengths
-        dict_bateau = {}                                
+        if weights is None:
+            return random.randint(0,9), random.randint(0,9)
+        else:
+            # Flatten weights and create probability distribution
+            flat_weights = weights.flatten()
+            flat_weights = flat_weights / flat_weights.sum()  # Normalize
+            
+            # Choose a cell index based on weights
+            cell_idx = np.random.choice(100, p=flat_weights)
+            ligne = cell_idx // 10
+            colonne = cell_idx % 10
+            print("weights loaded and used")
+            return ligne, colonne
+
+    def place_boats(self, weights=None):  
+        """
+        Generate boat coordinates with maximum uniform distribution
+        Uses repulsion strategy to spread boats evenly across the grid
+        
+        Parameters
+        ----------
+            weights : array, optional
+                2D array (10x10) of base probability weights for initial placement
+                
+        Returns
+        -------
+            dict: A dictionary with boat names as keys and lists of boat coordinates as tuples of two integers as values
+        """
+        bateaux = {"P":5,"C":4,"S":3,"T":2,"B":1}
+        dict_bateau = {}
         case_occupe = []
-        for symbole,taille in bateaux.items():          # Browse the dictionary that we introduce at the begining
-            invalid = False                             # Booleen to see if we can put the boat or no (if the boat exceeds the grid or if the boat overlap another boat )
-            while invalid==False:    
-                ligne = random.randint(0,9)             # Stock the random coordonate in the variable "ligne" and the variable "colonne"
-                colonne = random.randint(0,9)
-                orientation = random.choice(["H","V"])  # Choose boat direction (H : horizontal, V : vertical)
-                pos = []
-                if orientation=="H":
-                    if colonne+taille<=10:              # Check if the boat fits on the grid using generated coordinates and direction
-                        for i in range(taille):
-                            p = (ligne,colonne+i)        
-                            pos.append(p)               # List of boat's coordinates
-                    else:
-                        pos = []                        
-                else:                                    # Same for vertical
-                    if ligne+taille<=10:
-                        for i in range(taille):
-                            p = (ligne+i,colonne)
-                            pos.append(p)
-                    else:
-                        pos = []
-                if pos!=[]:
+        
+        for symbole, taille in bateaux.items():
+            invalid = False
+            tentatives = 0
+            max_tentatives = 1000
+            
+            while invalid == False and tentatives < max_tentatives:
+                tentatives += 1
+                
+                # Générer poids dynamiques basés sur la densité actuelle
+                weights_dynamiques = self.calculer_poids_uniformite(case_occupe, weights)
+                
+                ligne, colonne = self.random_func(weights_dynamiques)
+                orientation = random.choice(["H","V"])
+                
+                pos = self.tenter_placement_uniform(ligne, colonne, taille, orientation)
+                
+                if pos == []:
+                    orientation_alt = "V" if orientation == "H" else "H"
+                    pos = self.tenter_placement_uniform(ligne, colonne, taille, orientation_alt)
+                
+                if pos != []:
                     chevauchement = False
                     for k in pos:
                         if k in case_occupe:
-                            chevauchement=True
-                    if chevauchement==False:
-                        dict_bateau[symbole] = pos 
-                        for x in pos:
-                            case_occupe.append(x)       # We add the coordinates in the list to make sure that we have no duplicates
-                        invalid=True
+                            chevauchement = True
+                            break
+                    
+                    if chevauchement == False:
+                        dict_bateau[symbole] = pos
+                        case_occupe.extend(pos)
+                        invalid = True
+            
+            # Fallback si max_tentatives atteint
+            if not invalid:
+                pos = self.placement_force(taille, case_occupe)
+                if pos:
+                    dict_bateau[symbole] = pos
+                    case_occupe.extend(pos)
+        
         return dict_bateau
+
+
+    def calculer_poids_uniformite(self, case_occupe:list, weights_base=None):
+        """
+        Calculate weights that favor less occupied zones
+        Creates a density map and inverts weights to promote uniform distribution
+        
+        Parameters
+        ----------
+            case_occupe : list
+                List of tuples representing already occupied cells
+            weights_base : array, optional
+                2D array (10x10) of base weights to combine with density weights
+                
+        Returns
+        -------
+            array: Normalized 2D array (10x10) of probability weights
+        """
+        grille_densite = np.zeros((10, 10))
+        
+        # Calculer densité autour de chaque case occupée
+        for ligne, colonne in case_occupe:
+            for dl in range(-2, 3):
+                for dc in range(-2, 3):
+                    nl, nc = ligne + dl, colonne + dc
+                    if 0 <= nl < 10 and 0 <= nc < 10:
+                        distance = max(abs(dl), abs(dc))
+                        grille_densite[nl, nc] += 1.0 / (distance + 1)
+        
+        # Inverser les poids: zones denses = poids faibles
+        poids = 1.0 / (grille_densite + 1.0)
+        
+        # Combiner avec weights_base si fourni
+        if weights_base is not None:
+            poids = poids * weights_base
+        
+        # Normaliser
+        poids = poids / poids.sum()
+        
+        return poids
+
+
+    def tenter_placement_uniform(self, ligne : int, colonne : int, taille : int, orientation : str):
+        """
+        Attempt to place a boat at given coordinates
+        Uses adaptive logic to try alternative placements if initial position is invalid
+        
+        Parameters
+        ----------
+            ligne : int
+                Row coordinate for boat placement
+            colonne : int
+                Column coordinate for boat placement
+            taille : int
+                Length of the boat to place
+            orientation : str
+                Orientation of the boat ("H" for horizontal, "V" for vertical)
+                
+        Returns
+        -------
+            list: List of tuples representing boat coordinates if placement is valid,
+                empty list otherwise
+        """
+        pos = []
+        
+        if orientation == "H":
+            if colonne + taille <= 10:
+                pos = [(ligne, colonne + i) for i in range(taille)]
+            elif colonne - taille + 1 >= 0:
+                pos = [(ligne, colonne - i) for i in range(taille)]
+        else:
+            if ligne + taille <= 10:
+                pos = [(ligne + i, colonne) for i in range(taille)]
+            elif ligne - taille + 1 >= 0:
+                pos = [(ligne - i, colonne) for i in range(taille)]
+        
+        return pos
+
+
+    def placement_force(self, taille : int, case_occupe : list):
+        """
+        Force boat placement as last resort
+        Systematically searches for a valid position on the grid
+        
+        Parameters
+        ----------
+            taille : int
+                Length of the boat to place
+            case_occupe : list
+                List of tuples representing already occupied cells
+                
+        Returns
+        -------
+            list: List of tuples representing boat coordinates if valid position found,
+                empty list if no valid position exists
+        """
+        for ligne in range(10):
+            for colonne in range(10):
+                for orientation in ["H", "V"]:
+                    pos = self.tenter_placement_uniform(ligne, colonne, taille, orientation)
+                    
+                    if pos:
+                        valide = True
+                        for k in pos:
+                            if k in case_occupe:
+                                valide = False
+                                break
+                        
+                        if valide:
+                            return pos
+        
+        return []
 
     def attack (self, grid : np.ndarray, boat_coord : dict[str, list[tuple[int, int]]]) :
         """
@@ -306,9 +461,7 @@ class Bot (BasePlayer) :
                 if (boat_hit != "Miss") & (boat_hit != "Fail") & (not sunk):
                     self.hit_coords.append((attack_coords[0] , attack_coords[1]))
                 elif sunk :
-                    for (k,l) in self.hit_coords :
-                        if grid[k][l] == "X" :
-                            self.hit_coords.remove((k,l))
+                    self.hit_coords = [ coords for coords in self.hit_coords if grid[coords[0]][coords[1]] != "X"]
                 return boat_hit, sunk
             
             else :
@@ -376,9 +529,7 @@ class Bot (BasePlayer) :
                 
                 if fire :
                     if sunk :
-                        for (k,l) in self.hit_coords :
-                            if grid[k][l] == "X" :
-                                self.hit_coords.remove((k,l))
+                        self.hit_coords = [ coords for coords in self.hit_coords if grid[coords[0]][coords[1]] != "X"]
                     return boat_hit, sunk
                 else :
                     indexes = np.where(~np.isin(grid, ["*", "+", "X"]))
