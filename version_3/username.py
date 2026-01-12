@@ -34,4 +34,6 @@ def get_user_name(screen, manager):
         manager.draw_ui(screen)
         pygame.display.update()
     
+    text_input.kill()
+
     return user_name
