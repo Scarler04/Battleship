@@ -1,4 +1,6 @@
 import random
+import numpy as np
+import os
 
 from exceptions import BotLoopError
 from database import create_database, update_scoreboard, find_file
@@ -26,7 +28,7 @@ def main ():
         weights = np.load(weightmap_path)
     else :
         weights = None
-    
+
     coord_list = ["A","B","C","D","E","F","G","H","I","J"]
     boat_names = {
         "P": ("Porte-Avion", 5),
@@ -179,9 +181,11 @@ if __name__ == "__main__" :
         play = True
         while play :
             main()
-            play_again = input("Do you want to play again ? (Y/N)\n")
-            if play_again.upper().strip() == "N" :
-                play = False
+            play_again = ""
+            while play_again.upper().strip() not in ["N","Y"] :
+                play_again = input("Do you want to play again ? (Y/N)\n")
+                if play_again.upper().strip() == "N" :
+                    play = False
     except Exception as e :
         print("\n######################################################################\n")
         print(f"An error has occured : {e}")
