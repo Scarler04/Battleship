@@ -22,7 +22,7 @@ def game_init () :
     while diff == None :
         d = input("Choose difficulty (Easy/Hard):\n")
         try :
-            diff = difficulties.index(d.lower().capitalize().strip()) # Get difficulty as integer 0-1
+            diff = difficulties.index(d.strip().capitalize()) # Get difficulty as integer 0-1
         except ValueError :
             print("Invalid Input")
     bot_name = random.choice(["Laurent Beaudou","François Bouchon","Stephanie Leger"])
@@ -43,7 +43,6 @@ def placing_boats_grid (grid : np.ndarray, coords : list, message : str):
             Message to display
     """
 
-    print("Bataille Navale :\n\n")
     print("    " + "   ".join(str(i) for i in range(1, 11)))
     
     sep = "   " + "-" * 39
@@ -78,7 +77,6 @@ def show_grids (boat_grid : np.ndarray, attack_grid : np.ndarray, coords : list,
             Bot action message
     """
 
-    print("Bataille Navale :\n\n")
     print("    " + "   ".join(str(i) for i in range(1, 11))+ " "*20 + "   ".join(str(i) for i in range(1, 11))) # Print column index
     
     sep = "   " + "-" * 39 + " "*20 + "-" * 39 
@@ -132,4 +130,3 @@ def ascii_art (player_won : bool) :
 if __name__ == "__main__" :
     print(game_init())
     show_grids(np.full([10,10],"P"),np.full([10,10],"*"),["A","B","C","D","E","F","G","H","I","J"],3,"Nope")
-
