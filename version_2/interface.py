@@ -25,7 +25,7 @@ def game_init () :
             diff = difficulties.index(d.strip().capitalize()) # Get difficulty as integer 0-1
         except ValueError :
             print("Invalid Input")
-    bot_name = random.choice(["Laurent Beaudou","François Bouchon","Stephanie Leger"])
+    bot_name = random.choice(["Terminator","Bob","Wall-E"])
     return username, diff, bot_name
 
 
@@ -130,3 +130,4 @@ def ascii_art (player_won : bool) :
 if __name__ == "__main__" :
     print(game_init())
     show_grids(np.full([10,10],"P"),np.full([10,10],"*"),["A","B","C","D","E","F","G","H","I","J"],3,"Nope")
+
