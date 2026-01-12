@@ -62,7 +62,7 @@ def create_database () :
     if path :
         return path    
     else :
-        path = find_directory(dirname= "Battleship_v2")
+        path = find_directory(dirname= "version_2")
 
         # Adding default scoreboard
         if path :
@@ -71,7 +71,9 @@ def create_database () :
                 ["Username", "Score"],
                 ["vanRossum", 60],
                 ["Scarler", 50],
-                ["36", 70]
+                ["36", 70],
+                ["Anonymous", 99],
+                ["Douglas Adams", 42]
             ]
 
             with open(path, "w", newline= "") as f :
