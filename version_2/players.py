@@ -255,7 +255,6 @@ class Bot (BasePlayer) :
             cell_idx = np.random.choice(100, p=flat_weights)
             ligne = cell_idx // 10
             colonne = cell_idx % 10
-            print("weights loaded and used")
             return ligne, colonne
 
     def place_boats(self, weights=None):  
@@ -445,8 +444,11 @@ class Bot (BasePlayer) :
                 - bool: True if the targeted boat was sunk, False otherwise.
         """
         if self.difficulty == 0 :
+            # Identifier toutes les cases non attaquées
             indexes = np.where(~np.isin(grid, ["*", "+", "X"]))
             L = [(i,j) for i, j in zip(indexes[0],indexes[1])]
+
+            # Choisir et attaquer une case aléatoirement
             attack_coords = random.choice(L)
             boat_hit, sunk, _ = self.register_attack(x= attack_coords[0], y= attack_coords[1],boat_coord= boat_coord, attack_grid= grid, score= None, coord_list= None, player= False)
             return boat_hit, sunk
@@ -476,7 +478,7 @@ class Bot (BasePlayer) :
                     elif y in [0,9] :
                         orient = 1
                     else :
-                        orient = int(int(grid[x][y-1] not in invalids) + int(grid[x][y+1] not in invalids) > int(grid[x-1][y] not in invalids) + int(grid[x+1][y] not in invalids))
+                        orient = int(int(grid[x][y-1] not in invalids) + int(grid[x][y+1] not in invalids) > int(grid[x-1][y] not in invalids) + int(grid[x+1][y] not in invalids)) # 1 s'il y a plus de cases disponibles à l'horizontal, 0 sinon
                 
                 attempts = 1
                 fire = False
