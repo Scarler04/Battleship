@@ -1,0 +1,8 @@
+# Version Python
+# Compatible Python >=3.11,<3.15
+
+numpy>=2.3.4
+
+pygame>=2.5.2
+pygame-gui>=0.6.9
+pillow>=10.0
